@@ -391,6 +391,23 @@
     .mono { font-family: Consolas, "Courier New", monospace; color: var(--accent); overflow-wrap: anywhere; font-size: 13px; }
     .status-line { color: var(--muted); font-size: 12px; line-height: 1.5; }
     .check-row { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; margin-top: 10px; user-select: none; }
+    .tone-toggle-btn {
+      display: none;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 800;
+    }
+    .tone-toggle-btn span:last-child {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .tone-fields { display: block; }
     .materials-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .materials-table th, .materials-table td { border-bottom: 1px solid rgba(108,136,166,.18); padding: 9px 7px; text-align: left; }
     .materials-table th { color: var(--muted); font-weight: 700; background: rgba(246,249,252,.75); }
@@ -432,6 +449,22 @@
       }
       .control-group {
         padding: 12px 0;
+      }
+      #toneControlGroup {
+        padding: 8px 0 12px;
+      }
+      .tone-desktop-title {
+        display: none;
+      }
+      .tone-toggle-btn {
+        display: flex;
+      }
+      #toneControlGroup .tone-fields {
+        display: none;
+        padding-top: 10px;
+      }
+      #toneControlGroup.tone-open .tone-fields {
+        display: block;
       }
       label {
         font-size: 13px;
@@ -724,17 +757,23 @@
         <label class="check-row"><input id="showCoords" type="checkbox" checked /> <span>每 5 格显示坐标辅助线</span></label>
       </div>
 
-      <div class="control-group">
-        <label>调色</label>
-        <label>亮度</label>
-        <div class="row"><input id="brightnessRange" type="range" min="-100" max="100" value="0" /><div id="brightnessValue" class="value">0</div></div>
-        <label style="margin-top:10px;">对比度</label>
-        <div class="row"><input id="contrastRange" type="range" min="-100" max="100" value="0" /><div id="contrastValue" class="value">0</div></div>
-        <label style="margin-top:10px;">饱和度</label>
-        <div class="row"><input id="saturationRange" type="range" min="-100" max="100" value="0" /><div id="saturationValue" class="value">0</div></div>
-        <label style="margin-top:10px;">色温</label>
-        <div class="row"><input id="temperatureRange" type="range" min="-100" max="100" value="0" /><div id="temperatureValue" class="value">0</div></div>
-        <div class="btn-grid"><button id="resetToneBtn" class="secondary">重置调色</button></div>
+      <div id="toneControlGroup" class="control-group">
+        <label class="tone-desktop-title">调色</label>
+        <button id="toneToggleBtn" class="tone-toggle-btn secondary" type="button" aria-expanded="false">
+          <span>调色</span>
+          <span id="toneToggleState">展开 ▼</span>
+        </button>
+        <div id="toneFields" class="tone-fields">
+          <label>亮度</label>
+          <div class="row"><input id="brightnessRange" type="range" min="-100" max="100" value="0" /><div id="brightnessValue" class="value">0</div></div>
+          <label style="margin-top:10px;">对比度</label>
+          <div class="row"><input id="contrastRange" type="range" min="-100" max="100" value="0" /><div id="contrastValue" class="value">0</div></div>
+          <label style="margin-top:10px;">饱和度</label>
+          <div class="row"><input id="saturationRange" type="range" min="-100" max="100" value="0" /><div id="saturationValue" class="value">0</div></div>
+          <label style="margin-top:10px;">色温</label>
+          <div class="row"><input id="temperatureRange" type="range" min="-100" max="100" value="0" /><div id="temperatureValue" class="value">0</div></div>
+          <div class="btn-grid"><button id="resetToneBtn" class="secondary">重置调色</button></div>
+        </div>
       </div>
 
     </section>
@@ -2667,6 +2706,21 @@
     });
     $("customBeadSize").addEventListener("input", () => { if (lastPatternData) refreshAllViews(); });
     $("paletteMode").addEventListener("change", () => { $("customColorGroup").style.display = $("paletteMode").value === "custom" ? "block" : "none"; updateEditableColorSelectors(); });
+    function updateToneToggleState() {
+      const group = $("toneControlGroup");
+      const btn = $("toneToggleBtn");
+      const state = $("toneToggleState");
+      if (!group || !btn || !state) return;
+      const open = group.classList.contains("tone-open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      state.textContent = open ? "收起 ▲" : "展开 ▼";
+    }
+    $("toneToggleBtn").addEventListener("click", () => {
+      $("toneControlGroup").classList.toggle("tone-open");
+      updateToneToggleState();
+    });
+    updateToneToggleState();
+
     $("resetToneBtn").addEventListener("click", () => {
       ["brightnessRange", "contrastRange", "saturationRange", "temperatureRange"].forEach(id => $(id).value = 0);
       updateToneLabels();
