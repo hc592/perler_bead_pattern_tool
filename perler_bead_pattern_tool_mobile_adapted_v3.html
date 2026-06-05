@@ -1,0 +1,2934 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>拼豆图纸生成工具</title>
+  <style>
+    :root {
+      --bg: #eef4fa;
+      --panel: #ffffff;
+      --panel2: #f6f9fc;
+      --text: #243447;
+      --muted: #6f8092;
+      --line: #d6e1ec;
+      --accent: #4ea2f5;
+      --danger: #e86d75;
+      --ok: #33a76f;
+      --warn: #d89c18;
+      --shadow: 0 12px 30px rgba(58, 83, 110, .10);
+    }
+    * { box-sizing: border-box; }
+    html {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(78,162,245,.18), transparent 34rem),
+        radial-gradient(circle at bottom right, rgba(255,192,88,.16), transparent 34rem),
+        linear-gradient(180deg, #f5f9fd 0%, #eef4fa 100%);
+      color: var(--text);
+    }
+    header {
+      padding: 28px 24px 12px;
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 4vw, 38px);
+      letter-spacing: .04em;
+    }
+    .subtitle {
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 1000px;
+    }
+    main {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 18px 24px 36px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 980px) { main { grid-template-columns: 1fr; } }
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,251,255,.98)), var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    .controls {
+      padding: 18px;
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+    }
+    @media (max-width: 980px) { .controls { position: static; max-height: none; } }
+    .control-group { padding: 14px 0; border-bottom: 1px solid rgba(112,138,164,.12); }
+    .control-group:last-child { border-bottom: none; }
+    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 8px; }
+    input[type="file"], select, textarea, input[type="color"], input[type="number"] {
+      width: 100%;
+      background: var(--panel2);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline: none;
+      font-family: inherit;
+    }
+    input[type="color"] { height: 42px; padding: 4px; cursor: pointer; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    input[type="checkbox"] { accent-color: var(--accent); transform: translateY(1px); }
+    .row { display: grid; grid-template-columns: 1fr 82px; gap: 10px; align-items: center; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; }
+    .row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-items: center; }
+    .value {
+      text-align: center;
+      padding: 8px 0;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      border-radius: 10px;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 7px; line-height: 1.55; }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+    button {
+      border: 1px solid rgba(88, 123, 157, .18);
+      background: linear-gradient(180deg, rgba(78,162,245,.18), rgba(78,162,245,.08));
+      color: var(--text);
+      border-radius: 12px;
+      padding: 11px 12px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      transition: transform .12s ease, filter .12s ease, border-color .12s ease, background .12s ease;
+    }
+    button:hover { transform: translateY(-1px); border-color: rgba(78,162,245,.55); }
+    button:active { transform: translateY(0); filter: brightness(.92); }
+    button.secondary { background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(245,249,253,.96)); }
+    button.danger { background: linear-gradient(180deg, rgba(232,109,117,.18), rgba(232,109,117,.08)); }
+    button.warn { background: linear-gradient(180deg, rgba(216,156,24,.18), rgba(216,156,24,.08)); }
+    button.active { border-color: rgba(78,162,245,.8); background: linear-gradient(180deg, rgba(78,162,245,.28), rgba(78,162,245,.14)); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .workspace {
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+      grid-template-rows: auto auto minmax(0, auto);
+      align-content: start;
+    }
+    .tabs {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      min-height: 60px;
+      height: 60px;
+      overflow: hidden;
+    }
+    .tab-btn {
+      width: 108px;
+      min-width: 108px;
+      height: 48px;
+      flex: 0 0 108px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-sizing: border-box;
+      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(245,249,253,.96));
+    }
+    .tab-btn.active,
+    .tab-btn:focus,
+    .tab-btn:active {
+      width: 108px;
+      min-width: 108px;
+      height: 48px;
+      flex-basis: 108px;
+      padding: 0;
+    }
+    .tab-section { display: none; gap: 16px; }
+    .tab-section.active { display: grid; }
+    .canvases { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 1000px) { .canvases { grid-template-columns: 1fr; } }
+    main, .panel, .workspace, .tab-section, .canvas-card, .editor-layout, .editor-tools-grid, .data-area { min-width: 0; }
+    body { overflow-x: hidden; }
+    .canvas-card {
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(108, 136, 166, .16);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+    .canvas-title { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+    .canvas-wrap {
+      display: grid;
+      place-items: center;
+      overflow: auto;
+      border-radius: 12px;
+      background: var(--canvas-bg, #ffffff);
+      min-height: 220px;
+      padding: 12px;
+    }
+    canvas { max-width: 100%; max-height: 620px; border-radius: 8px; background: transparent; }
+    #patternCanvas, #editorCanvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+    .pattern-wrap {
+      display: block;
+      min-height: 260px;
+      max-height: 620px;
+      cursor: grab;
+      overscroll-behavior: contain;
+      user-select: none;
+      touch-action: none;
+    }
+    .pattern-wrap:active { cursor: grabbing; }
+    #patternCanvas {
+      display: block;
+      max-width: none;
+      max-height: none;
+      width: auto;
+      height: auto;
+      margin: 0 auto;
+      border-radius: 0;
+      background: #fff;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      min-height: 160px;
+      height: 160px;
+      overflow: hidden;
+      align-items: stretch;
+    }
+    @media (max-width: 760px) {
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        height: 196px;
+        min-height: 196px;
+      }
+    }
+    .stat {
+      background: rgba(255,255,255,.72);
+      border: 1px solid rgba(108, 136, 166, .16);
+      border-radius: 14px;
+      padding: 12px 14px;
+      height: 100%;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .stat .num {
+      font-size: 20px;
+      line-height: 1.2;
+      min-height: 24px;
+      color: var(--accent);
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .stat .name { margin-top: 8px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+    .file-action-row { display: grid; grid-template-columns: minmax(0, 1fr) 92px; gap: 10px; align-items: center; }
+    .file-action-row input[type="file"] { min-width: 0; }
+    .file-action-row button { height: 42px; padding: 0 12px; }
+    @media (max-width: 520px) { .file-action-row { grid-template-columns: 1fr; } }
+    .export-layout { display: grid; gap: 16px; }
+    .export-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+    .export-toolbar button { min-width: 92px; }
+    .export-zoom-value {
+      min-width: 76px;
+      text-align: center;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      border-radius: 10px;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+    .export-preview-wrap {
+      display: block;
+      min-height: 360px;
+      max-height: 640px;
+      overflow: auto;
+      padding: 14px;
+      background: #ffffff;
+      overscroll-behavior: contain;
+      touch-action: pan-x pan-y;
+      cursor: grab;
+      user-select: none;
+    }
+    .export-preview-wrap:active { cursor: grabbing; }
+    .export-svg-mount {
+      display: inline-block;
+      line-height: 0;
+      min-width: max-content;
+      min-height: 100%;
+    }
+    .export-svg-mount svg {
+      display: block;
+      max-width: none;
+      max-height: none;
+      background: #ffffff;
+      box-shadow: 0 0 0 1px rgba(88, 123, 157, .18);
+    }
+    .export-empty {
+      min-width: 240px;
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: rgba(246,249,252,.88);
+      border: 1px dashed rgba(108,136,166,.28);
+      border-radius: 14px;
+      padding: 20px;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .export-actions { margin-top: 12px; }
+    .export-actions button { min-height: 46px; }
+    .data-area { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (max-width: 1000px) { .data-area { grid-template-columns: 1fr; } }
+    textarea { min-height: 270px; resize: vertical; font-family: Consolas, "Courier New", monospace; font-size: 12px; line-height: 1.45; }
+    .palette { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; max-height: 180px; overflow: auto; }
+    .swatch { width: 34px; height: 34px; border-radius: 999px; border: 1px solid rgba(0,0,0,.16); cursor: pointer; position: relative; box-shadow: inset 0 3px 8px rgba(255,255,255,.45), inset 0 -3px 7px rgba(0,0,0,.12); }
+    .swatch.selected { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .swatch .idx { position: absolute; inset: 0; display: grid; place-items: center; font-size: 10px; color: #fff; text-shadow: 0 1px 2px #000, 0 -1px 2px #000; pointer-events: none; font-weight: 700; }
+    .editor-layout { display: grid; gap: 16px; min-width: 0; }
+    .editor-shell { min-width: 0; overflow: hidden; }
+    .editor-wrap {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      height: clamp(360px, 62vh, 720px);
+      min-height: 360px;
+      max-height: 720px;
+      padding: 14px;
+      cursor: crosshair;
+      overflow: auto;
+      overscroll-behavior: contain;
+      touch-action: none;
+      position: relative;
+      contain: layout paint;
+    }
+    .editor-stage { position: relative; display: block; flex: 0 0 auto; line-height: 0; margin: 0 auto; }
+    #editorCanvas { display: block; max-width: none; max-height: none; width: auto; height: auto; flex: 0 0 auto; border-radius: 0; box-shadow: 0 0 0 1px rgba(88, 123, 157, .22); transform-origin: top left; position: relative; z-index: 2; background: #fff; }
+    #editorReferenceCanvas { position: absolute; inset: 0; display: none; max-width: none; max-height: none; width: auto; height: auto; border-radius: 0; pointer-events: none; z-index: 1; }
+    #editorOverlay { position: absolute; inset: 0; pointer-events: none; z-index: 3; background-repeat: repeat; }
+    .editor-bottom-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: flex-start; margin-top: 10px; }
+    .editor-bottom-toolbar button { min-width: 108px; }
+    .editor-bottom-toolbar .text-btn { width: 108px; min-width: 108px; }
+    .editor-opacity-panel {
+      display: none;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+      align-items: center;
+    }
+    .editor-opacity-panel.show { display: grid; }
+    .opacity-mini-card {
+      min-height: 42px;
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(108, 136, 166, .16);
+      border-radius: 10px;
+      padding: 6px 10px;
+      display: grid;
+      grid-template-columns: 104px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+    .opacity-mini-card .mini-title {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 0;
+      white-space: nowrap;
+    }
+    .opacity-mini-card .row { grid-template-columns: 1fr 48px; gap: 6px; }
+    .opacity-mini-card input[type="range"] { margin: 0; height: 20px; }
+    .opacity-mini-card .value { padding: 3px 0; border-radius: 8px; font-size: 12px; }
+    @media (max-width: 760px) { .editor-opacity-panel { grid-template-columns: 1fr; } }
+    .editor-bottom-toolbar .nav-btn { min-width: 52px; padding: 8px 12px; font-size: 18px; line-height: 1; }
+    .editor-toolbar-zoom { display: flex; align-items: center; gap: 10px; min-width: 320px; flex: 1 1 320px; }
+    .editor-toolbar-zoom .zoom-label { color: var(--muted); font-size: 14px; white-space: nowrap; }
+    .editor-toolbar-zoom input[type="range"] { flex: 1 1 auto; min-width: 140px; }
+    .editor-tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .tool-card { background: rgba(255,255,255,.78); border: 1px solid rgba(108, 136, 166, .16); border-radius: 16px; padding: 14px; }
+    .small-title { font-weight: 700; margin: 0 0 8px; }
+    .selected-color-box { display: grid; grid-template-columns: 1fr; gap: 8px; align-items: stretch; }
+    .color-select-row { display: block; }
+    .color-select-row input[type="color"] { width: 100%; height: 48px; padding: 3px; border-radius: 12px; }
+    .color-select-row select,
+    .color-select-row .color-preview { display: none; }
+    .color-preview {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.16);
+      box-shadow: inset 0 3px 8px rgba(255,255,255,.45), inset 0 -3px 7px rgba(0,0,0,.12);
+      background: #000;
+    }
+    .color-select-row select { min-width: 0; }
+    .mono { font-family: Consolas, "Courier New", monospace; color: var(--accent); overflow-wrap: anywhere; font-size: 13px; }
+    .status-line { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .check-row { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; margin-top: 10px; user-select: none; }
+    .tone-toggle-btn {
+      display: none;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 800;
+    }
+    .tone-toggle-btn span:last-child {
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .tone-fields { display: block; }
+    .materials-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .materials-table th, .materials-table td { border-bottom: 1px solid rgba(108,136,166,.18); padding: 9px 7px; text-align: left; }
+    .materials-table th { color: var(--muted); font-weight: 700; background: rgba(246,249,252,.75); }
+    .color-chip { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(0,0,0,.16); vertical-align: middle; margin-right: 8px; }
+    .sep { height: 1px; background: rgba(112,138,164,.16); margin: 12px 0; }
+    .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); padding: 10px 16px; border-radius: 999px; background: rgba(255,255,255,.96); border: 1px solid rgba(112, 138, 164, .18); color: var(--ok); box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 10; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+
+    /* 手机端适配：布局收窄、触控区域加大、画布区域可触摸拖动/缩放 */
+    @media (max-width: 720px) {
+      :root { --shadow: 0 8px 22px rgba(58, 83, 110, .09); }
+      html { scrollbar-gutter: auto; }
+      body { min-width: 0; overflow-x: hidden; }
+      header {
+        padding: 16px 12px 6px;
+      }
+      h1 {
+        font-size: 24px;
+        letter-spacing: .02em;
+      }
+      .subtitle {
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      main {
+        width: 100%;
+        max-width: none;
+        padding: 10px 10px 24px;
+        gap: 12px;
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .panel {
+        border-radius: 14px;
+      }
+      .controls,
+      .workspace {
+        padding: 12px;
+      }
+      .control-group {
+        padding: 12px 0;
+      }
+      #toneControlGroup {
+        padding: 8px 0 12px;
+      }
+      .tone-desktop-title {
+        display: none;
+      }
+      .tone-toggle-btn {
+        display: flex;
+      }
+      #toneControlGroup .tone-fields {
+        display: none;
+        padding-top: 10px;
+      }
+      #toneControlGroup.tone-open .tone-fields {
+        display: block;
+      }
+      label {
+        font-size: 13px;
+      }
+      input[type="file"], select, textarea, input[type="color"], input[type="number"], button {
+        font-size: 16px;
+      }
+      button {
+        min-height: 44px;
+        padding: 10px 10px;
+      }
+      .row {
+        grid-template-columns: minmax(0, 1fr) 64px;
+        gap: 8px;
+      }
+      .row-2,
+      .btn-grid.export-actions {
+        grid-template-columns: 1fr;
+      }
+      .row-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .btn-grid {
+        gap: 8px;
+      }
+      .value {
+        padding: 7px 0;
+        font-size: 13px;
+      }
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        height: auto;
+        min-height: 0;
+        gap: 8px;
+      }
+      .stat {
+        min-height: 74px;
+        padding: 10px;
+      }
+      .stat .num {
+        font-size: 18px;
+      }
+      .tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+      }
+      .tab-btn,
+      .tab-btn.active,
+      .tab-btn:focus,
+      .tab-btn:active {
+        width: 100%;
+        min-width: 0;
+        flex-basis: auto;
+        height: 44px;
+        font-size: 14px;
+        border-radius: 12px;
+      }
+      .canvas-card {
+        padding: 10px;
+        border-radius: 14px;
+      }
+      .canvas-title {
+        font-size: 12px;
+        gap: 6px;
+      }
+      .canvas-wrap {
+        min-height: 180px;
+        padding: 8px;
+      }
+      canvas {
+        max-height: 56vh;
+      }
+      .pattern-wrap {
+        min-height: 240px;
+        max-height: 68vh;
+        touch-action: none;
+      }
+      .export-preview-wrap {
+        min-height: 300px;
+        max-height: 68vh;
+        padding: 8px;
+        touch-action: none;
+      }
+      .export-toolbar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .export-toolbar button,
+      .export-toolbar .export-zoom-value {
+        width: 100%;
+        min-width: 0;
+      }
+      .export-zoom-value {
+        display: grid;
+        place-items: center;
+        min-height: 44px;
+      }
+      .editor-wrap {
+        height: 68vh;
+        min-height: 320px;
+        max-height: none;
+        padding: 8px;
+        touch-action: none;
+      }
+      .editor-bottom-toolbar {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .editor-bottom-toolbar button,
+      .editor-bottom-toolbar .text-btn,
+      .editor-bottom-toolbar .nav-btn {
+        width: 100%;
+        min-width: 0;
+      }
+      .editor-bottom-toolbar .nav-btn {
+        font-size: 18px;
+      }
+      .editor-opacity-panel {
+        grid-template-columns: 1fr;
+      }
+      .opacity-mini-card {
+        grid-template-columns: 88px minmax(0, 1fr);
+        padding: 6px 8px;
+      }
+      .opacity-mini-card .mini-title {
+        font-size: 11px;
+      }
+      .editor-tools-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .tool-card {
+        padding: 12px;
+        border-radius: 14px;
+      }
+      .palette {
+        max-height: 150px;
+      }
+      .swatch {
+        width: 38px;
+        height: 38px;
+      }
+      .materials-table {
+        min-width: 520px;
+      }
+      #materialsTableWrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .toast {
+        left: 12px;
+        right: 12px;
+        bottom: 18px;
+        transform: none;
+        text-align: center;
+        border-radius: 14px;
+      }
+      .toast.show {
+        transform: translateY(-4px);
+      }
+    }
+
+    @media (max-width: 420px) {
+      header { padding-top: 14px; }
+      main { padding-left: 8px; padding-right: 8px; }
+      .controls,
+      .workspace { padding: 10px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .stat { min-height: 68px; }
+      .stat .name { font-size: 11px; }
+      .tab-btn,
+      .tab-btn.active,
+      .tab-btn:focus,
+      .tab-btn:active { font-size: 13px; }
+      .editor-bottom-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .export-toolbar { grid-template-columns: 1fr 1fr; }
+      .row-3 { grid-template-columns: 1fr; }
+      .file-action-row { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      body { background: #fff; }
+      header, .controls, .tabs, .editor-bottom-toolbar, .editor-tools-grid, .stats, #previewSection, #editorSection { display: none !important; }
+      main { display: block; padding: 0; }
+      .panel { box-shadow: none; border: none; }
+      #dataSection { display: block !important; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>拼豆图纸生成工具</h1>
+    <div class="subtitle">
+      上传图片后自动转换为拼豆图纸：圆珠预览、格子编号、颜色用量统计、编辑修补、图纸导出预览、导出 PNG / SVG / 材料清单。所有处理都在浏览器本地完成。
+    </div>
+  </header>
+
+  <main>
+    <section class="panel controls">
+      <div class="control-group">
+        <label>选择图片</label>
+        <div class="file-action-row">
+          <input id="fileInput" type="file" accept="image/*" />
+          <button id="clearBtn" class="danger">清空</button>
+        </div>
+        <div class="hint">建议先用较小宽度生成，例如 40～80 颗豆，确认效果后再加大。</div>
+      </div>
+
+      <div class="control-group">
+        <label>图纸宽度 / 横向豆数</label>
+        <div class="row">
+          <input id="beadWidth" type="range" min="8" max="160" value="80" />
+          <div id="beadWidthValue" class="value">80</div>
+        </div>
+        <div class="hint">高度会按原图比例自动计算。豆数越大，细节越多，但实际拼装也越费豆。</div>
+      </div>
+
+      <div class="control-group">
+        <label>拼豆规格</label>
+        <select id="beadSizePreset">
+          <option value="5">常规 5mm 拼豆</option>
+          <option value="2.6">迷你 2.6mm 拼豆</option>
+          <option value="10">大号 10mm 拼豆</option>
+          <option value="custom">自定义直径</option>
+        </select>
+        <div id="customBeadSizeBox" style="display:none; margin-top:10px;">
+          <label>单颗拼豆直径，单位 mm</label>
+          <input id="customBeadSize" type="number" min="1" max="20" step="0.1" value="5" />
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>颜色模式</label>
+        <select id="paletteMode">
+          <option value="custom" selected>自动压缩为指定色数</option>
+          <option value="free">自由颜色，不限制色板</option>
+          <option value="bw2">黑白 2 色</option>
+          <option value="grayscale8">灰阶 8 色</option>
+          <option value="websafe">Web Safe 216 色</option>
+        </select>
+        <div class="hint">默认会按你设置的色数从图片中自动提取主色，让图纸更干净；“自由颜色”会尽量保留更多原始像素色。</div>
+      </div>
+
+      <div class="control-group" id="customColorGroup">
+        <label>自动压缩色数</label>
+        <div class="row">
+          <input id="customColors" type="range" min="2" max="64" value="24" />
+          <div id="customColorsValue" class="value">24</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>白色背景不放豆</label>
+        <label class="check-row">
+          <input id="removeWhiteBg" type="checkbox" />
+          <span>生成图纸后，只清理与图纸最外圈连通的白色豆</span>
+        </label>
+        <div class="hint">不会参与颜色压缩或上色判断；会先按当前颜色模式完整生成图纸，再把边缘连通的白色背景豆设为空豆，主体内部白色不受影响。</div>
+      </div>
+
+      <div class="control-group">
+        <label>抖动 Dithering</label>
+        <select id="ditherMode">
+          <option value="none">关闭，更干净</option>
+          <option value="ordered">开启，细节更丰富但豆色更碎</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>图纸显示</label>
+        <div class="row-2">
+          <select id="renderMode">
+            <option value="beads">圆珠图纸</option>
+            <option value="squares" selected>方格图纸</option>
+          </select>
+          <select id="labelMode">
+            <option value="number">颜色编号</option>
+            <option value="symbol">符号标记</option>
+            <option value="none">不显示文字</option>
+          </select>
+        </div>
+        <label class="check-row"><input id="showGrid" type="checkbox" checked /> <span>显示网格线</span></label>
+        <label class="check-row"><input id="showCoords" type="checkbox" checked /> <span>每 5 格显示坐标辅助线</span></label>
+      </div>
+
+      <div id="toneControlGroup" class="control-group">
+        <label class="tone-desktop-title">调色</label>
+        <button id="toneToggleBtn" class="tone-toggle-btn secondary" type="button" aria-expanded="false">
+          <span>调色</span>
+          <span id="toneToggleState">展开 ▼</span>
+        </button>
+        <div id="toneFields" class="tone-fields">
+          <label>亮度</label>
+          <div class="row"><input id="brightnessRange" type="range" min="-100" max="100" value="0" /><div id="brightnessValue" class="value">0</div></div>
+          <label style="margin-top:10px;">对比度</label>
+          <div class="row"><input id="contrastRange" type="range" min="-100" max="100" value="0" /><div id="contrastValue" class="value">0</div></div>
+          <label style="margin-top:10px;">饱和度</label>
+          <div class="row"><input id="saturationRange" type="range" min="-100" max="100" value="0" /><div id="saturationValue" class="value">0</div></div>
+          <label style="margin-top:10px;">色温</label>
+          <div class="row"><input id="temperatureRange" type="range" min="-100" max="100" value="0" /><div id="temperatureValue" class="value">0</div></div>
+          <div class="btn-grid"><button id="resetToneBtn" class="secondary">重置调色</button></div>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="panel workspace">
+      <div class="stats">
+        <div class="stat"><div id="statSize" class="num">-</div><div class="name">图纸尺寸</div></div>
+        <div class="stat"><div id="statColors" class="num">-</div><div class="name">颜色数量</div></div>
+        <div class="stat"><div id="statBeads" class="num">-</div><div class="name">总豆数</div></div>
+        <div class="stat"><div id="statRealSize" class="num">-</div><div class="name">实际尺寸</div></div>
+      </div>
+
+      <div class="tabs">
+        <button id="tabPreview" class="tab-btn active">图纸预览</button>
+        <button id="tabEditor" class="tab-btn">图纸编辑</button>
+        <button id="tabData" class="tab-btn">图纸导出</button>
+      </div>
+
+      <section id="previewSection" class="tab-section active">
+        <div class="canvases">
+          <div class="canvas-card">
+            <div class="canvas-title"><span>原图预览</span><span id="originalInfo">未选择图片</span></div>
+            <div class="canvas-wrap"><canvas id="originalCanvas"></canvas></div>
+          </div>
+          <div class="canvas-card">
+            <div class="canvas-title"><span>拼豆图纸预览</span><span id="patternInfo">等待生成</span></div>
+            <div id="patternWrap" class="canvas-wrap pattern-wrap"><canvas id="patternCanvas"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="editorSection" class="tab-section">
+        <div class="editor-layout">
+          <div class="canvas-card">
+            <div class="canvas-title"><span>编辑画布</span><span id="editorInfo">尚未进入编辑模式</span></div>
+            <div id="editorWrap" class="canvas-wrap editor-wrap">
+              <div id="editorStage" class="editor-stage">
+                <canvas id="editorCanvas"></canvas>
+                <canvas id="editorReferenceCanvas"></canvas>
+                <div id="editorOverlay"></div>
+              </div>
+            </div>
+            <div class="status-line">电脑：左键编辑、右键拖动、滚轮缩放；手机：单指编辑，双指拖动/缩放。建议在这里修掉零散颜色、背景杂点和边缘锯齿。</div>
+            <div class="editor-bottom-toolbar">
+              <button id="undoBtn" class="secondary nav-btn" title="上一步">←</button>
+              <button id="redoBtn" class="secondary nav-btn" title="下一步">→</button>
+              <button id="compareOriginalBtn" class="secondary text-btn" title="按住查看原图">原图对比</button>
+              <button id="toggleOriginalBaseBtn" class="secondary text-btn" title="切换原图打底">原图打底</button>
+              <button id="autoFitZoomBtn" class="secondary text-btn">自动适配</button>
+              <button id="zoomOutBtn" class="secondary text-btn">缩小</button>
+              <button id="zoomInBtn" class="secondary text-btn">放大</button>
+            </div>
+            <div id="editorOpacityPanel" class="editor-opacity-panel">
+              <div class="opacity-mini-card">
+                <div class="mini-title">原图底透明度</div>
+                <div class="row">
+                  <input id="baseOpacityRange" type="range" min="0" max="100" value="50" />
+                  <div id="baseOpacityValue" class="value">50</div>
+                </div>
+              </div>
+              <div class="opacity-mini-card">
+                <div class="mini-title">拼豆图纸透明度</div>
+                <div class="row">
+                  <input id="patternOpacityRange" type="range" min="0" max="100" value="0" />
+                  <div id="patternOpacityValue" class="value">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="editor-tools-grid">
+            <div class="tool-card">
+              <p class="small-title">编辑工具</p>
+              <div class="row-3">
+                <button id="toolPaint" class="active">画笔</button>
+                <button id="toolErase" class="secondary">空豆</button>
+                <button id="toolPick" class="secondary">取色</button>
+              </div>
+              <div class="hint">“空豆”表示该格不放拼豆；取色后可对同色区域进行删除或替换。</div>
+              <div class="sep"></div>
+              <label>当前画笔颜色</label>
+              <div class="selected-color-box">
+                <div class="color-select-row"><div id="editColorPreview" class="color-preview" hidden></div><select id="editColor" hidden></select><input id="editColorPicker" type="color" value="#ff004d" title="自由选色" /></div>
+                <div>
+                  <div id="selectedColorText" class="mono">#ff004d</div>
+                  <div id="pickedIndexText" class="status-line">选中颜色编号：未选择</div>
+                  <div id="pickedSeedText" class="status-line">选中格子：未记录</div>
+                </div>
+              </div>
+              <div id="editorPaletteBox" class="palette"></div>
+            </div>
+
+            <div class="tool-card">
+              <p class="small-title">同色处理</p>
+              <div class="status-line">先用取色点击某一种颜色，再删除或替换。勾选连通区域后，只影响当前这一块。</div>
+              <div class="btn-grid">
+                <button id="deleteColorBtn" class="danger">删除该颜色</button>
+                <button id="replaceColorBtn" class="warn">替换该颜色</button>
+              </div>
+              <label class="check-row"><input id="connectedOnly" type="checkbox" /> <span>只处理当前连通色块</span></label>
+              <label style="margin-top:12px;">替换成</label>
+              <div class="color-select-row"><div id="replaceColorPreview" class="color-preview" hidden></div><select id="replaceColor" hidden></select><input id="replaceColorPicker" type="color" value="#ff004d" title="自由选色" /></div>
+              <div class="btn-grid">
+                <button id="cleanupPaletteBtn" class="secondary">清理未用颜色</button>
+                <button id="fillTransparentBtn" class="secondary">填充空豆</button>
+              </div>
+            </div>
+
+
+            <div class="tool-card">
+              <p class="small-title">描边</p>
+              <label>描边颜色</label>
+              <div class="color-select-row"><div id="outlineColorPreview" class="color-preview" hidden></div><select id="outlineColor" hidden></select><input id="outlineColorPicker" type="color" value="#000000" title="自由选色" /></div>
+
+              <label style="margin-top:12px;">描边模式</label>
+              <select id="outlineMode">
+                <option value="add">新增外描边（不覆盖原图）</option>
+                <option value="replace">替换最外层像素</option>
+              </select>
+
+              <label style="margin-top:12px;">描边厚度</label>
+              <div class="row">
+                <input id="outlineThickness" type="range" min="1" max="6" value="1" />
+                <div id="outlineThicknessValue" class="value">1</div>
+              </div>
+
+              <button id="applyOutlineBtn" class="warn" style="margin-top:12px; width:100%;">应用描边</button>
+              <div class="hint">“新增外描边”会在图像外侧新增一圈或多圈描边，不会覆盖原有图案。<br>“替换最外层像素”会把当前图像最外圈像素改成描边色。</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="dataSection" class="tab-section">
+        <div class="export-layout">
+          <div class="canvas-card">
+            <div class="canvas-title"><span>图纸导出预览</span><span id="exportPreviewInfo">等待生成</span></div>
+            <div id="exportPreviewWrap" class="canvas-wrap export-preview-wrap">
+              <div id="exportSvgMount" class="export-svg-mount">
+                <div class="export-empty">生成图纸后，这里会显示导出效果预览。<br>预览使用 SVG 矢量渲染，放大不会变糊。</div>
+              </div>
+            </div>
+            <div class="export-toolbar">
+              <button id="mirrorPatternBtn" class="secondary" disabled>镜像图案</button>
+              <button id="exportFitBtn" class="secondary" disabled>自动适配</button>
+              <button id="exportActualBtn" class="secondary" disabled>100%</button>
+              <button id="exportZoomOutBtn" class="secondary" disabled>缩小</button>
+              <button id="exportZoomInBtn" class="secondary" disabled>放大</button>
+              <div id="exportZoomValue" class="export-zoom-value">-</div>
+            </div>
+            <div class="btn-grid export-actions">
+              <button id="downloadPngBtn" class="secondary" disabled>导出 PNG 图纸</button>
+              <button id="downloadSvgBtn" class="secondary" disabled>导出 SVG 图纸</button>
+              <button id="downloadCsvBtn" class="secondary" disabled>导出材料清单</button>
+            </div>
+            <div class="hint">这里预览的是最终导出的图纸版式。SVG 为矢量图，可以无损放大；PNG 会按同一版式导出为高清位图。</div>
+          </div>
+
+          <div class="canvas-card">
+            <p class="small-title">材料清单</p>
+            <div id="materialsTableWrap"></div>
+            <div class="hint">数量为图纸中实际需要的豆数，不包含备损。真实制作建议每种颜色多准备 5%～10%。</div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast">完成</div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const fileInput = $("fileInput");
+    const originalCanvas = $("originalCanvas");
+    const patternCanvas = $("patternCanvas");
+    const patternWrap = $("patternWrap");
+    const editorCanvas = $("editorCanvas");
+    const editorReferenceCanvas = $("editorReferenceCanvas");
+    const exportPreviewWrap = $("exportPreviewWrap");
+    const exportSvgMount = $("exportSvgMount");
+    const originalCtx = originalCanvas.getContext("2d", { willReadFrequently: true });
+    const patternCtx = patternCanvas.getContext("2d", { willReadFrequently: true });
+    const editorCtx = editorCanvas.getContext("2d", { willReadFrequently: true });
+    const editorReferenceCtx = editorReferenceCanvas.getContext("2d", { willReadFrequently: true });
+    const editorStage = $("editorStage");
+    const editorOverlay = $("editorOverlay");
+
+    let sourceImage = null;
+    let lastPatternData = null;
+    let showOriginalBase = false;
+    let isOriginalCompareActive = false;
+    let originalBaseTransparency = 50;
+    let patternTransparency = 0;
+    let activeTool = "paint";
+    let selectedPaletteIndex = null;
+    let selectedColor = "#ff004d";
+    let selectedSeed = null;
+    let editorZoom = 16;
+    let previewZoom = 1;
+    let initialPreviewZoom = 1;
+    let exportPreviewZoom = 1;
+    let isPreviewPanning = false;
+    let previewPanStartX = 0;
+    let previewPanStartY = 0;
+    let previewPanStartScrollLeft = 0;
+    let previewPanStartScrollTop = 0;
+    let isExportPreviewPanning = false;
+    let exportPreviewPanStartX = 0;
+    let exportPreviewPanStartY = 0;
+    let exportPreviewPanStartScrollLeft = 0;
+    let exportPreviewPanStartScrollTop = 0;
+    let isDrawing = false;
+    let isPanning = false;
+    let panStartX = 0;
+    let panStartY = 0;
+    let panStartScrollLeft = 0;
+    let panStartScrollTop = 0;
+    let lastPaintKey = "";
+    let undoStack = [];
+    let redoStack = [];
+    let userAdjustedZoom = false;
+    const MAX_HISTORY = 60;
+    const MIN_PREVIEW_ZOOM = 0.03;
+    const MAX_PREVIEW_ZOOM = 8;
+    const MIN_EXPORT_ZOOM = 0.03;
+    const MAX_EXPORT_ZOOM = 8;
+    const SYMBOLS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789△○□◇☆✚✦♢♣♠♥●▲■◆".split("");
+    const EXPORT_SITE_LABEL = "https://hc592.github.io/perler_bead_pattern_tool/";
+    const ALPHA_THRESHOLD = 10;
+    const WHITE_BG_THRESHOLD = 242;
+    const MAX_EDITOR_COLOR_UI_OPTIONS = 512;
+
+    const BAYER_4 = [
+      [0, 8, 2, 10],
+      [12, 4, 14, 6],
+      [3, 11, 1, 9],
+      [15, 7, 13, 5]
+    ];
+
+    const PALETTES = {
+      bw2: ["#000000", "#ffffff"],
+      grayscale8: ["#000000", "#242424", "#494949", "#6d6d6d", "#919191", "#b6b6b6", "#dadada", "#ffffff"]
+    };
+
+    // 颜色模式默认使用“自动压缩为指定色数”。
+    // 编辑模式中的画笔 / 替换 / 描边颜色不再受颜色模式限制，
+    // 界面只保留一个原生自由选色器，内部仍会自动加入图纸调色板。
+    const IMAGE_DERIVED_PALETTE_LIMITS = {};
+    function isImageDerivedPaletteMode(mode) {
+      return mode === "custom";
+    }
+
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    function hexToRgb(hex) {
+      const n = parseInt(hex.slice(1), 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+    function rgbToHex(r, g, b) {
+      return "#" + [r, g, b].map(v => {
+        const s = clamp(Math.round(v), 0, 255).toString(16);
+        return s.length === 1 ? "0" + s : s;
+      }).join("");
+    }
+    function normalizeColor(color) {
+      if (!color || color === "transparent") return "transparent";
+      if (color.startsWith("#") && color.length === 7) return color.toLowerCase();
+      const temp = document.createElement("canvas");
+      const ctx = temp.getContext("2d");
+      ctx.fillStyle = color;
+      return ctx.fillStyle.toLowerCase();
+    }
+    function distSq(a, b) {
+      const dr = a[0] - b[0];
+      const dg = a[1] - b[1];
+      const db = a[2] - b[2];
+      return dr * dr + dg * dg + db * db;
+    }
+    function nearestPaletteColor(r, g, b, paletteRgb) {
+      let best = 0;
+      let bestD = Infinity;
+      for (let i = 0; i < paletteRgb.length; i++) {
+        const d = distSq([r, g, b], paletteRgb[i]);
+        if (d < bestD) { bestD = d; best = i; }
+      }
+      return paletteRgb[best];
+    }
+    function quantizeWebSafe(v) { return Math.round(v / 51) * 51; }
+    function applyOrderedDither(r, g, b, x, y, amount = 38) {
+      const threshold = (BAYER_4[y % 4][x % 4] / 15 - 0.5) * amount;
+      return [clamp(r + threshold, 0, 255), clamp(g + threshold, 0, 255), clamp(b + threshold, 0, 255)];
+    }
+    function isNearWhiteColor(color) {
+      if (!color || color === "transparent") return false;
+      const [r, g, b] = hexToRgb(color);
+      return r > WHITE_BG_THRESHOLD && g > WHITE_BG_THRESHOLD && b > WHITE_BG_THRESHOLD;
+    }
+    function removeOuterWhiteBeadsAfterPattern(patternData, enabled) {
+      if (!enabled || !patternData || !patternData.width || !patternData.height) return 0;
+      const { width, height, palette, pixels } = patternData;
+      const visited = new Uint8Array(width * height);
+      const queue = [];
+
+      function tryAdd(x, y) {
+        if (x < 0 || y < 0 || x >= width || y >= height) return;
+        const p = y * width + x;
+        if (visited[p]) return;
+        const index = pixels[y][x];
+        if (!index || !isNearWhiteColor(palette[index])) return;
+        visited[p] = 1;
+        queue.push(p);
+      }
+
+      for (let x = 0; x < width; x++) {
+        tryAdd(x, 0);
+        tryAdd(x, height - 1);
+      }
+      for (let y = 1; y < height - 1; y++) {
+        tryAdd(0, y);
+        tryAdd(width - 1, y);
+      }
+
+      for (let head = 0; head < queue.length; head++) {
+        const p = queue[head];
+        const x = p % width;
+        const y = Math.floor(p / width);
+        tryAdd(x + 1, y);
+        tryAdd(x - 1, y);
+        tryAdd(x, y + 1);
+        tryAdd(x, y - 1);
+      }
+
+      for (const p of queue) {
+        const x = p % width;
+        const y = Math.floor(p / width);
+        pixels[y][x] = 0;
+      }
+      return queue.length;
+    }
+    function signedText(v) { return (v > 0 ? "+" : "") + v; }
+    function getBeadDiameterMm() {
+      const preset = $("beadSizePreset").value;
+      if (preset === "custom") return clamp(parseFloat($("customBeadSize").value) || 5, 1, 20);
+      return parseFloat(preset);
+    }
+    function formatMm(mm) {
+      if (mm >= 1000) return (mm / 1000).toFixed(2) + "m";
+      if (mm >= 100) return (mm / 10).toFixed(1) + "cm";
+      return Math.round(mm) + "mm";
+    }
+    function getToneSettings() {
+      return {
+        brightness: parseInt($("brightnessRange").value, 10),
+        contrast: parseInt($("contrastRange").value, 10),
+        saturation: parseInt($("saturationRange").value, 10),
+        temperature: parseInt($("temperatureRange").value, 10)
+      };
+    }
+    function updateToneLabels() {
+      $("brightnessValue").textContent = signedText(parseInt($("brightnessRange").value, 10));
+      $("contrastValue").textContent = signedText(parseInt($("contrastRange").value, 10));
+      $("saturationValue").textContent = signedText(parseInt($("saturationRange").value, 10));
+      $("temperatureValue").textContent = signedText(parseInt($("temperatureRange").value, 10));
+    }
+    function applyToneAdjustments(imageData, settings, alphaThreshold) {
+      const adjusted = new ImageData(new Uint8ClampedArray(imageData.data), imageData.width, imageData.height);
+      const data = adjusted.data;
+      const brightnessShift = settings.brightness * 1.2;
+      const contrastValue = settings.contrast * 2.55;
+      const contrastFactor = (259 * (contrastValue + 255)) / (255 * (259 - contrastValue || 1));
+      const saturationFactor = Math.max(0, (100 + settings.saturation) / 100);
+      const temperatureShift = settings.temperature * 1.1;
+
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3] <= alphaThreshold) continue;
+        let r = data[i], g = data[i + 1], b = data[i + 2];
+        r += brightnessShift; g += brightnessShift; b += brightnessShift;
+        r = contrastFactor * (r - 128) + 128;
+        g = contrastFactor * (g - 128) + 128;
+        b = contrastFactor * (b - 128) + 128;
+        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = gray + (r - gray) * saturationFactor;
+        g = gray + (g - gray) * saturationFactor;
+        b = gray + (b - gray) * saturationFactor;
+        r += temperatureShift; g += temperatureShift * 0.12; b -= temperatureShift;
+        data[i] = clamp(r, 0, 255); data[i + 1] = clamp(g, 0, 255); data[i + 2] = clamp(b, 0, 255);
+      }
+      return adjusted;
+    }
+    function medianCutPalette(pixels, colorCount) {
+      if (!pixels.length) return [[255, 255, 255]];
+      let boxes = [pixels.slice()];
+      const channelRange = (box, c) => {
+        let min = 255, max = 0;
+        for (const p of box) { if (p[c] < min) min = p[c]; if (p[c] > max) max = p[c]; }
+        return max - min;
+      };
+      while (boxes.length < colorCount) {
+        let bestIndex = -1, bestRange = -1;
+        for (let i = 0; i < boxes.length; i++) {
+          if (boxes[i].length <= 1) continue;
+          const range = Math.max(channelRange(boxes[i], 0), channelRange(boxes[i], 1), channelRange(boxes[i], 2));
+          if (range > bestRange) { bestRange = range; bestIndex = i; }
+        }
+        if (bestIndex === -1) break;
+        const box = boxes.splice(bestIndex, 1)[0];
+        const ranges = [channelRange(box, 0), channelRange(box, 1), channelRange(box, 2)];
+        const channel = ranges.indexOf(Math.max(...ranges));
+        box.sort((a, b) => a[channel] - b[channel]);
+        const mid = Math.floor(box.length / 2);
+        boxes.push(box.slice(0, mid), box.slice(mid));
+      }
+      return boxes.map(box => {
+        let r = 0, g = 0, b = 0;
+        for (const p of box) { r += p[0]; g += p[1]; b += p[2]; }
+        const len = Math.max(1, box.length);
+        return [Math.round(r / len), Math.round(g / len), Math.round(b / len)];
+      });
+    }
+    function buildPaletteFromMode(imageData, mode, colorCount, alphaThreshold) {
+      if (isImageDerivedPaletteMode(mode)) {
+        const targetCount = mode === "custom" ? colorCount : IMAGE_DERIVED_PALETTE_LIMITS[mode];
+        const pixels = [];
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3] <= alphaThreshold) continue;
+          pixels.push([data[i], data[i + 1], data[i + 2]]);
+        }
+        return medianCutPalette(pixels, targetCount);
+      }
+      if (PALETTES[mode]) return PALETTES[mode].map(hexToRgb);
+      return null;
+    }
+
+    function processImageToPattern(imageData, mode, colorCount, dither, alphaThreshold) {
+      const { width, height, data } = imageData;
+      const pixels = [];
+      const palette = ["transparent"];
+      const paletteMap = new Map([["transparent", 0]]);
+      const removeWhiteBg = $("removeWhiteBg").checked;
+      const fixedPalette = buildPaletteFromMode(imageData, mode, colorCount, alphaThreshold);
+
+      if (fixedPalette) {
+        palette.length = 0; paletteMap.clear();
+        const seen = new Set();
+        const colors = ["transparent"];
+        for (const rgb of fixedPalette) {
+          const key = rgbToHex(rgb[0], rgb[1], rgb[2]).toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          colors.push(key);
+        }
+        colors.forEach((key, i) => {
+          palette.push(key); paletteMap.set(key, i);
+        });
+      }
+
+      for (let y = 0; y < height; y++) {
+        const row = [];
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+          let r = data[i], g = data[i + 1], b = data[i + 2];
+          const a = data[i + 3];
+          if (a <= alphaThreshold) { row.push(0); continue; }
+          if (dither === "ordered" && mode !== "free") [r, g, b] = applyOrderedDither(r, g, b, x, y);
+          if (mode === "websafe") { r = quantizeWebSafe(r); g = quantizeWebSafe(g); b = quantizeWebSafe(b); }
+          else if (fixedPalette) { [r, g, b] = nearestPaletteColor(r, g, b, fixedPalette); }
+          const key = rgbToHex(r, g, b).toLowerCase();
+          let index = paletteMap.get(key);
+          if (index === undefined) { index = palette.length; palette.push(key); paletteMap.set(key, index); }
+          row.push(index);
+        }
+        pixels.push(row);
+      }
+      const patternData = {
+        width, height, palette, pixels,
+        meta: {
+          type: "perler-bead-pattern",
+          version: 1,
+          source: "perler-bead-pattern-tool",
+          paletteMode: mode,
+          paletteSource: isImageDerivedPaletteMode(mode) ? "image-derived" : (mode === "free" ? "free-image-colors" : "fixed-palette"),
+          beadDiameterMm: getBeadDiameterMm(),
+          note: "pixels[y][x] is the palette index. palette[0] is transparent / no bead."
+        }
+      };
+      const removedWhiteBgBeads = removeOuterWhiteBeadsAfterPattern(patternData, removeWhiteBg);
+      patternData.meta.whiteBackgroundRemoval = removeWhiteBg ? "post-pattern-edge-connected-white-beads" : "off";
+      patternData.meta.removedWhiteBgBeads = removedWhiteBgBeads;
+      return patternData;
+    }
+
+    function clonePatternData(data) {
+      return {
+        width: data.width,
+        height: data.height,
+        palette: data.palette.slice(),
+        pixels: data.pixels.map(row => row.slice()),
+        meta: data.meta ? { ...data.meta } : undefined
+      };
+    }
+    function pushHistory() {
+      if (!lastPatternData) return;
+      undoStack.push(clonePatternData(lastPatternData));
+      if (undoStack.length > MAX_HISTORY) undoStack.shift();
+      redoStack.length = 0;
+      updateUndoRedoButtons();
+    }
+    function undo() {
+      if (!undoStack.length || !lastPatternData) return;
+      redoStack.push(clonePatternData(lastPatternData));
+      lastPatternData = undoStack.pop();
+      refreshAllViews();
+      showToast("已撤销");
+    }
+    function redo() {
+      if (!redoStack.length || !lastPatternData) return;
+      undoStack.push(clonePatternData(lastPatternData));
+      lastPatternData = redoStack.pop();
+      refreshAllViews();
+      showToast("已重做");
+    }
+    function updateUndoRedoButtons() {
+      $("undoBtn").disabled = !lastPatternData || undoStack.length === 0;
+      $("redoBtn").disabled = !lastPatternData || redoStack.length === 0;
+    }
+    function ensureColorInPalette(color) {
+      color = normalizeColor(color);
+      if (color === "transparent") return 0;
+      let index = lastPatternData.palette.indexOf(color);
+      if (index === -1) { index = lastPatternData.palette.length; lastPatternData.palette.push(color); }
+      return index;
+    }
+
+    function getMaterialCounts(patternData = lastPatternData) {
+      const counts = Array(patternData.palette.length).fill(0);
+      for (const row of patternData.pixels) for (const index of row) {
+        if (index !== 0 && patternData.palette[index] !== "transparent") counts[index]++;
+      }
+      return counts;
+    }
+    function getUsedPaletteEntries(patternData = lastPatternData) {
+      if (!patternData) return [];
+      const counts = getMaterialCounts(patternData);
+      const entries = [];
+      for (let i = 1; i < patternData.palette.length; i++) {
+        if (counts[i] > 0) entries.push({ index: i, color: patternData.palette[i], count: counts[i], symbol: SYMBOLS[(i - 1) % SYMBOLS.length] || String(i) });
+      }
+      return entries;
+    }
+    function countTotalBeads(patternData = lastPatternData) {
+      return getMaterialCounts(patternData).reduce((sum, n, i) => i === 0 ? sum : sum + n, 0);
+    }
+
+    function getPatternRenderOptions(forExport = false) {
+      const maxDim = Math.max(lastPatternData ? lastPatternData.width : 1, lastPatternData ? lastPatternData.height : 1);
+      let cell = forExport ? 52 : clamp(Math.floor(900 / maxDim), 8, 28);
+      if (!forExport && maxDim > 110) cell = 7;
+      return {
+        cell,
+        margin: forExport ? 40 : 16,
+        renderMode: $("renderMode").value,
+        labelMode: $("labelMode").value,
+        showGrid: $("showGrid").checked,
+        showCoords: $("showCoords").checked,
+        suppressTextLabels: false
+      };
+    }
+    function getPreviewRenderOptions() {
+      const options = getPatternRenderOptions(false);
+      const hasZoomedIn = previewZoom > initialPreviewZoom + 0.001;
+      // 预览默认自动适配时先不画编号/符号，避免缩小后的文字糊成一片；
+      // 一旦用户主动放大预览，就恢复当前“颜色编号 / 符号 / 不显示文字”的显示设置。
+      // 对于大尺寸图纸，基础 cell 可能只有 7px，因此这里放宽文字绘制阈值，
+      // 让放大后的 CSS 画布也能看到编号/符号。
+      options.suppressTextLabels = !hasZoomedIn;
+      options.textLabelMinCell = hasZoomedIn ? 1 : 12;
+      options.coordLabelMinCell = hasZoomedIn ? 1 : 12;
+      options.compactTextLabels = hasZoomedIn;
+      return options;
+    }
+    function luminance(hex) {
+      if (hex === "transparent") return 255;
+      const [r, g, b] = hexToRgb(hex);
+      return 0.299 * r + 0.587 * g + 0.114 * b;
+    }
+    function drawPatternToCanvas(canvas, ctx, patternData, options) {
+      const { width, height, palette, pixels } = patternData;
+      const { cell, margin, renderMode, labelMode, showGrid, showCoords } = options;
+      const w = width * cell + margin * 2;
+      const h = height * cell + margin * 2;
+      canvas.width = w;
+      canvas.height = h;
+      ctx.imageSmoothingEnabled = false;
+      ctx.clearRect(0, 0, w, h);
+      if (!options.transparentBackground) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      if (showCoords) {
+        ctx.fillStyle = "rgba(78,162,245,.06)";
+        for (let x = 0; x < width; x += 5) ctx.fillRect(margin + x * cell, margin, cell, height * cell);
+        for (let y = 0; y < height; y += 5) ctx.fillRect(margin, margin + y * cell, width * cell, cell);
+      }
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const index = pixels[y][x];
+          const color = palette[index];
+          const px = margin + x * cell;
+          const py = margin + y * cell;
+          if (!index || !color || color === "transparent") {
+            if (!options.transparentBackground) {
+              ctx.fillStyle = "rgba(0,0,0,.025)";
+              ctx.fillRect(px, py, cell, cell);
+            }
+            continue;
+          }
+          if (renderMode === "squares") {
+            ctx.fillStyle = color;
+            ctx.fillRect(px + 1, py + 1, cell - 2, cell - 2);
+          } else {
+            const cx = px + cell / 2;
+            const cy = py + cell / 2;
+            const radius = Math.max(2, cell * 0.42);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(0,0,0,.14)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+          const textLabelMinCell = options.textLabelMinCell === undefined ? 12 : options.textLabelMinCell;
+          if (!options.suppressTextLabels && labelMode !== "none" && cell >= textLabelMinCell) {
+            const normalFontSize = Math.max(8, Math.floor(cell * .33));
+            const compactFontSize = clamp(Math.floor(cell * .56), 4, Math.max(4, cell - 2));
+            ctx.fillStyle = luminance(color) < 135 ? "#ffffff" : "#202020";
+            ctx.font = `700 ${options.compactTextLabels ? compactFontSize : normalFontSize}px Microsoft YaHei, Arial`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            const text = labelMode === "symbol" ? (SYMBOLS[(index - 1) % SYMBOLS.length] || String(index)) : String(index);
+            ctx.fillText(text, px + cell / 2, py + cell / 2 + .5);
+          }
+        }
+      }
+
+      if (showGrid) {
+        ctx.strokeStyle = "rgba(42,62,82,.22)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x <= width; x++) {
+          ctx.moveTo(margin + x * cell + .5, margin);
+          ctx.lineTo(margin + x * cell + .5, margin + height * cell);
+        }
+        for (let y = 0; y <= height; y++) {
+          ctx.moveTo(margin, margin + y * cell + .5);
+          ctx.lineTo(margin + width * cell, margin + y * cell + .5);
+        }
+        ctx.stroke();
+      }
+
+      const coordLabelMinCell = options.coordLabelMinCell === undefined ? 12 : options.coordLabelMinCell;
+      if (!options.suppressTextLabels && showCoords && cell >= coordLabelMinCell) {
+        ctx.fillStyle = "#61758a";
+        ctx.font = `${options.compactTextLabels ? Math.max(6, Math.floor(cell * .7)) : 11}px Microsoft YaHei, Arial`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for (let x = 0; x < width; x += 5) ctx.fillText(String(x + 1), margin + x * cell + cell / 2, margin - 10);
+        ctx.textAlign = "right";
+        for (let y = 0; y < height; y += 5) ctx.fillText(String(y + 1), margin - 8, margin + y * cell + cell / 2);
+      }
+    }
+    function updatePatternInfo() {
+      if (!lastPatternData) return;
+      const total = countTotalBeads();
+      const zoomText = previewZoom && Math.abs(previewZoom - 1) > 0.01 ? `，预览 ${Math.round(previewZoom * 100)}%` : "";
+      $("patternInfo").textContent = `${lastPatternData.width} × ${lastPatternData.height}，${total} 颗${zoomText}`;
+    }
+    function applyPreviewZoom() {
+      const zoom = clamp(previewZoom, MIN_PREVIEW_ZOOM, MAX_PREVIEW_ZOOM);
+      previewZoom = zoom;
+      patternCanvas.style.width = `${Math.max(1, patternCanvas.width * zoom)}px`;
+      patternCanvas.style.height = `${Math.max(1, patternCanvas.height * zoom)}px`;
+    }
+    function getOriginalPreviewDisplaySize() {
+      const rect = originalCanvas.getBoundingClientRect();
+      return {
+        width: Math.max(1, Math.round(rect.width || originalCanvas.width || 1)),
+        height: Math.max(1, Math.round(rect.height || originalCanvas.height || 1))
+      };
+    }
+    function fitPreviewZoomToOriginalSize() {
+      if (!lastPatternData || !sourceImage || !patternCanvas.width || !patternCanvas.height) return;
+      const originalSize = getOriginalPreviewDisplaySize();
+      // 用整张图纸 canvas 的实际尺寸来计算默认缩放，包括坐标边距和网格边距。
+      // 这样初始显示不会因为 margin 或 25% 最小缩放限制而比原图预览更大。
+      previewZoom = clamp(
+        Math.min(originalSize.width / patternCanvas.width, originalSize.height / patternCanvas.height),
+        MIN_PREVIEW_ZOOM,
+        MAX_PREVIEW_ZOOM
+      );
+      initialPreviewZoom = previewZoom;
+      drawPreviewPattern();
+      requestAnimationFrame(() => {
+        patternWrap.scrollLeft = 0;
+        patternWrap.scrollTop = 0;
+      });
+      updatePatternInfo();
+    }
+    function drawPreviewPattern() {
+      if (!lastPatternData) return;
+      drawPatternToCanvas(patternCanvas, patternCtx, lastPatternData, getPreviewRenderOptions());
+      applyPreviewZoom();
+      updatePatternInfo();
+    }
+    function setPreviewZoom(value, evt = null) {
+      if (!lastPatternData) return;
+      const oldZoom = previewZoom;
+      const newZoom = clamp(value, MIN_PREVIEW_ZOOM, MAX_PREVIEW_ZOOM);
+      if (Math.abs(newZoom - oldZoom) < 0.001) return;
+
+      let anchor = null;
+      if (evt) {
+        const rect = patternCanvas.getBoundingClientRect();
+        const wrapRect = patternWrap.getBoundingClientRect();
+        anchor = {
+          xInCanvas: (evt.clientX - rect.left) / Math.max(oldZoom, 0.001),
+          yInCanvas: (evt.clientY - rect.top) / Math.max(oldZoom, 0.001),
+          xInWrap: evt.clientX - wrapRect.left,
+          yInWrap: evt.clientY - wrapRect.top
+        };
+      }
+
+      previewZoom = newZoom;
+      drawPreviewPattern();
+      if (anchor) {
+        requestAnimationFrame(() => {
+          patternWrap.scrollLeft = Math.max(0, patternCanvas.offsetLeft + anchor.xInCanvas * newZoom - anchor.xInWrap);
+          patternWrap.scrollTop = Math.max(0, patternCanvas.offsetTop + anchor.yInCanvas * newZoom - anchor.yInWrap);
+        });
+      }
+      updatePatternInfo();
+    }
+    function drawOriginalImage(img) {
+      const max = 720;
+      const ratio = Math.min(1, max / img.width, max / img.height);
+      originalCanvas.width = Math.round(img.width * ratio);
+      originalCanvas.height = Math.round(img.height * ratio);
+      originalCtx.clearRect(0, 0, originalCanvas.width, originalCanvas.height);
+      originalCtx.imageSmoothingEnabled = true;
+      originalCtx.drawImage(img, 0, 0, originalCanvas.width, originalCanvas.height);
+      $("originalInfo").textContent = `${img.width} × ${img.height}`;
+    }
+
+    function updateOpacityControlsUI() {
+      const panel = $("editorOpacityPanel");
+      const baseValue = $("baseOpacityValue");
+      const patternValue = $("patternOpacityValue");
+      if (baseValue) baseValue.textContent = String(originalBaseTransparency);
+      if (patternValue) patternValue.textContent = String(patternTransparency);
+      if (panel) panel.classList.toggle("show", !!showOriginalBase);
+    }
+
+    function getBaseCanvasOpacity() {
+      return clamp(1 - originalBaseTransparency / 100, 0, 1);
+    }
+
+    function getPatternCanvasOpacity() {
+      return clamp(1 - patternTransparency / 100, 0, 1);
+    }
+
+    function drawEditorReferenceCanvas() {
+      if (!lastPatternData || !sourceImage) {
+        editorReferenceCanvas.width = 1;
+        editorReferenceCanvas.height = 1;
+        editorReferenceCanvas.style.width = "1px";
+        editorReferenceCanvas.style.height = "1px";
+        return;
+      }
+      const opt = getEditorRenderOptions();
+      editorReferenceCanvas.width = editorCanvas.width;
+      editorReferenceCanvas.height = editorCanvas.height;
+      editorReferenceCtx.clearRect(0, 0, editorReferenceCanvas.width, editorReferenceCanvas.height);
+      editorReferenceCtx.fillStyle = "#ffffff";
+      editorReferenceCtx.fillRect(0, 0, editorReferenceCanvas.width, editorReferenceCanvas.height);
+      editorReferenceCtx.imageSmoothingEnabled = true;
+      editorReferenceCtx.drawImage(
+        sourceImage,
+        opt.margin,
+        opt.margin,
+        lastPatternData.width * opt.cell,
+        lastPatternData.height * opt.cell
+      );
+      editorReferenceCtx.strokeStyle = "rgba(88, 123, 157, .28)";
+      editorReferenceCtx.lineWidth = 1;
+      editorReferenceCtx.strokeRect(opt.margin + 0.5, opt.margin + 0.5, lastPatternData.width * opt.cell - 1, lastPatternData.height * opt.cell - 1);
+      editorReferenceCanvas.style.width = `${editorReferenceCanvas.width}px`;
+      editorReferenceCanvas.style.height = `${editorReferenceCanvas.height}px`;
+    }
+
+    function updateEditorReferenceLayer() {
+      const compareBtn = $("compareOriginalBtn");
+      const baseBtn = $("toggleOriginalBaseBtn");
+      updateOpacityControlsUI();
+      if (!lastPatternData || !sourceImage) {
+        editorReferenceCanvas.style.display = "none";
+        editorReferenceCanvas.style.opacity = "0";
+        editorCanvas.style.visibility = "visible";
+        editorOverlay.style.visibility = "visible";
+        editorCanvas.style.opacity = "1";
+        editorCanvas.style.background = "#fff";
+        if (compareBtn) compareBtn.classList.remove("active");
+        if (baseBtn) baseBtn.classList.remove("active");
+        return;
+      }
+      if (isOriginalCompareActive) {
+        editorReferenceCanvas.style.display = "block";
+        editorReferenceCanvas.style.opacity = "1";
+        editorCanvas.style.visibility = "hidden";
+        editorOverlay.style.visibility = "hidden";
+        if (compareBtn) compareBtn.classList.add("active");
+        if (baseBtn) baseBtn.classList.toggle("active", showOriginalBase);
+        return;
+      }
+      editorCanvas.style.visibility = "visible";
+      editorOverlay.style.visibility = "visible";
+      editorCanvas.style.opacity = String(getPatternCanvasOpacity());
+      if (compareBtn) compareBtn.classList.remove("active");
+      if (showOriginalBase) {
+        editorReferenceCanvas.style.display = "block";
+        editorReferenceCanvas.style.opacity = String(getBaseCanvasOpacity());
+      } else {
+        editorReferenceCanvas.style.display = "none";
+        editorReferenceCanvas.style.opacity = "0";
+        editorCanvas.style.opacity = "1";
+      }
+      if (baseBtn) baseBtn.classList.toggle("active", showOriginalBase);
+    }
+
+    function setOriginalCompareActive(active) {
+      isOriginalCompareActive = !!active;
+      updateEditorReferenceLayer();
+    }
+
+    function toggleOriginalBase() {
+      if (!lastPatternData || !sourceImage) return;
+      showOriginalBase = !showOriginalBase;
+      drawEditor();
+      updateEditorReferenceLayer();
+    }
+
+    function generatePattern() {
+      if (!sourceImage) { showToast("请先选择图片", true); return; }
+      const targetW = parseInt($("beadWidth").value, 10);
+      const targetH = Math.max(1, Math.round(sourceImage.height * targetW / sourceImage.width));
+      const temp = document.createElement("canvas");
+      const tempCtx = temp.getContext("2d", { willReadFrequently: true });
+      temp.width = targetW;
+      temp.height = targetH;
+      tempCtx.imageSmoothingEnabled = true;
+      tempCtx.clearRect(0, 0, targetW, targetH);
+      tempCtx.drawImage(sourceImage, 0, 0, targetW, targetH);
+      const alphaThreshold = ALPHA_THRESHOLD;
+      const base = tempCtx.getImageData(0, 0, targetW, targetH);
+      const adjusted = applyToneAdjustments(base, getToneSettings(), alphaThreshold);
+      lastPatternData = processImageToPattern(
+        adjusted,
+        $("paletteMode").value,
+        parseInt($("customColors").value, 10),
+        $("ditherMode").value,
+        alphaThreshold
+      );
+      lastPatternData.meta.toneAdjustments = getToneSettings();
+      undoStack = [];
+      redoStack = [];
+      selectedPaletteIndex = null;
+      selectedSeed = null;
+      previewZoom = 1;
+      initialPreviewZoom = 1;
+      exportPreviewZoom = 1;
+      userAdjustedZoom = false;
+      setButtonsEnabled(true);
+      let renderOk = true;
+      try {
+        refreshAllViews();
+        fitPreviewZoomToOriginalSize();
+        if ($("editorSection").classList.contains("active")) autoFitZoom();
+      } catch (err) {
+        renderOk = false;
+        console.error("刷新图纸视图时出错：", err);
+        showToast("图纸已生成，但视图刷新异常，请尝试进入编辑或降低颜色数", true);
+      }
+      if (renderOk) showToast("图纸已生成");
+    }
+
+    function getEditorRenderOptions() {
+      return {
+        cell: editorZoom,
+        margin: $("showCoords").checked ? 20 : 0,
+        renderMode: $("renderMode").value,
+        labelMode: $("labelMode").value,
+        showGrid: $("showGrid").checked,
+        showCoords: $("showCoords").checked
+      };
+    }
+
+    function drawEditor() {
+      if (!lastPatternData) {
+        editorCanvas.width = 1; editorCanvas.height = 1;
+        editorReferenceCanvas.width = 1; editorReferenceCanvas.height = 1;
+        editorCanvas.style.width = "1px"; editorCanvas.style.height = "1px";
+        editorReferenceCanvas.style.width = "1px"; editorReferenceCanvas.style.height = "1px";
+        editorStage.style.width = "1px"; editorStage.style.height = "1px";
+        editorOverlay.style.opacity = "0";
+        editorOverlay.style.backgroundImage = "none";
+        editorReferenceCanvas.style.display = "none";
+        editorCanvas.style.visibility = "visible";
+        editorOverlay.style.visibility = "visible";
+        $("editorInfo").textContent = "尚未进入编辑模式";
+        return;
+      }
+      const { width, height } = lastPatternData;
+      const wrap = $("editorWrap");
+      const oldW = Math.max(1, editorStage.offsetWidth || 1);
+      const oldH = Math.max(1, editorStage.offsetHeight || 1);
+      const centerRatioX = (wrap.scrollLeft + wrap.clientWidth / 2) / oldW;
+      const centerRatioY = (wrap.scrollTop + wrap.clientHeight / 2) / oldH;
+
+      const opt = getEditorRenderOptions();
+      opt.transparentBackground = showOriginalBase && !isOriginalCompareActive;
+      drawPatternToCanvas(editorCanvas, editorCtx, lastPatternData, opt);
+
+      // 编辑区现在直接使用和“图纸预览”相同的渲染逻辑：
+      // 圆珠/方格、编号/符号、网格线、每 5 格坐标辅助线都会同步跟随。
+      editorCanvas.style.width = `${editorCanvas.width}px`;
+      editorCanvas.style.height = `${editorCanvas.height}px`;
+      editorCanvas.style.background = showOriginalBase ? "transparent" : "#fff";
+      editorStage.style.width = `${editorCanvas.width}px`;
+      editorStage.style.height = `${editorCanvas.height}px`;
+      editorOverlay.style.width = `${editorCanvas.width}px`;
+      editorOverlay.style.height = `${editorCanvas.height}px`;
+      editorOverlay.style.opacity = "0";
+      editorOverlay.style.backgroundImage = "none";
+      drawEditorReferenceCanvas();
+      editorReferenceCanvas.style.width = `${editorCanvas.width}px`;
+      editorReferenceCanvas.style.height = `${editorCanvas.height}px`;
+      updateEditorReferenceLayer();
+
+      requestAnimationFrame(() => {
+        const newW = Math.max(1, editorStage.offsetWidth || 1);
+        const newH = Math.max(1, editorStage.offsetHeight || 1);
+        wrap.scrollLeft = Math.max(0, centerRatioX * newW - wrap.clientWidth / 2);
+        wrap.scrollTop = Math.max(0, centerRatioY * newH - wrap.clientHeight / 2);
+      });
+      const modeText = opt.renderMode === "squares" ? "方格" : "圆珠";
+      $("editorInfo").textContent = `${width} × ${height}，${modeText}显示，缩放 ${editorZoom}x`;
+    }
+    function computeFitZoom() {
+      if (!lastPatternData) return 16;
+      const wrap = $("editorWrap");
+      const availableW = Math.max(240, (wrap.clientWidth || 900) - 28);
+      const availableH = Math.max(240, Math.min(window.innerHeight * 0.62, 720) - 28);
+      return clamp(Math.floor(Math.min(availableW / lastPatternData.width, availableH / lastPatternData.height)), 4, 48);
+    }
+    function setEditorZoom(value, markManual = true) {
+      editorZoom = clamp(value, 4, 48);
+      const zoomInput = $("editorZoom");
+      const zoomValue = $("editorZoomValue");
+      if (zoomInput) zoomInput.value = editorZoom;
+      if (zoomValue) zoomValue.textContent = editorZoom + "x";
+      if (markManual) userAdjustedZoom = true;
+      drawEditor();
+    }
+    function autoFitZoom() { userAdjustedZoom = false; setEditorZoom(computeFitZoom(), false); }
+
+    function renderPaletteBox(container) {
+      if (!container) return;
+      container.innerHTML = "";
+      if (!lastPatternData) return;
+      const allEntries = getUsedPaletteEntries().sort((a, b) => b.count - a.count || a.index - b.index);
+      let entries = allEntries;
+      if (allEntries.length > MAX_EDITOR_COLOR_UI_OPTIONS) {
+        entries = allEntries.slice(0, MAX_EDITOR_COLOR_UI_OPTIONS);
+        if (selectedPaletteIndex !== null && !entries.some(e => e.index === selectedPaletteIndex)) {
+          const selectedEntry = allEntries.find(e => e.index === selectedPaletteIndex);
+          if (selectedEntry) entries.push(selectedEntry);
+        }
+      }
+      entries.forEach(entry => {
+        const swatch = document.createElement("div");
+        swatch.className = "swatch" + (entry.index === selectedPaletteIndex ? " selected" : "");
+        swatch.title = `${entry.index}: ${entry.color}，${entry.count} 颗`;
+        swatch.style.background = entry.color;
+        const idx = document.createElement("span");
+        idx.className = "idx";
+        idx.textContent = entry.index;
+        swatch.appendChild(idx);
+        swatch.addEventListener("click", () => { selectPaletteIndex(entry.index); setTool("paint"); });
+        container.appendChild(swatch);
+      });
+      if (allEntries.length > MAX_EDITOR_COLOR_UI_OPTIONS) {
+        const note = document.createElement("div");
+        note.className = "status-line";
+        note.style.width = "100%";
+        note.textContent = `颜色较多，编辑面板仅显示用量最多的 ${MAX_EDITOR_COLOR_UI_OPTIONS} 种；其他颜色可用取色工具直接从图纸上选中。`;
+        container.appendChild(note);
+      }
+    }
+    function renderPalettes() {
+      renderPaletteBox($("editorPaletteBox"));
+      updateEditableColorSelectors();
+    }
+    function buildWebSafePalette() {
+      const values = [0, 51, 102, 153, 204, 255];
+      const colors = [];
+      for (const r of values) for (const g of values) for (const b of values) colors.push(rgbToHex(r, g, b).toLowerCase());
+      return colors;
+    }
+    function getCurrentPaletteMode() {
+      return lastPatternData?.meta?.paletteMode || $("paletteMode").value;
+    }
+    function getEditableColorOptions() {
+      let colors = [];
+      if (lastPatternData) {
+        // 编辑模式永远优先使用当前图纸真实调色板，不再被“颜色模式”限制。
+        colors = lastPatternData.palette.filter(color => color && color !== "transparent");
+      }
+      [
+        selectedColor,
+        "#000000",
+        $("editColor")?.value,
+        $("replaceColor")?.value,
+        $("outlineColor")?.value,
+        $("editColorPicker")?.value,
+        $("replaceColorPicker")?.value,
+        $("outlineColorPicker")?.value
+      ].forEach(color => {
+        color = normalizeColor(color);
+        if (color && color !== "transparent") colors.push(color);
+      });
+      if (!colors.length) colors = ["#000000", "#ffffff", "#ff004d"];
+
+      const seen = new Set();
+      let uniqueColors = colors
+        .map(normalizeColor)
+        .filter(color => color && color !== "transparent")
+        .filter(color => {
+          if (seen.has(color)) return false;
+          seen.add(color);
+          return true;
+        });
+
+      if (lastPatternData && uniqueColors.length > MAX_EDITOR_COLOR_UI_OPTIONS) {
+        const counts = getMaterialCounts(lastPatternData);
+        const mustKeep = [
+          selectedColor,
+          "#000000",
+          selectedPaletteIndex !== null ? lastPatternData.palette[selectedPaletteIndex] : null,
+          $("editColor")?.value,
+          $("replaceColor")?.value,
+          $("outlineColor")?.value,
+          $("editColorPicker")?.value,
+          $("replaceColorPicker")?.value,
+          $("outlineColorPicker")?.value
+        ].map(normalizeColor).filter(color => color && color !== "transparent");
+
+        uniqueColors = uniqueColors
+          .map(color => {
+            const index = lastPatternData.palette.indexOf(color);
+            return { color, index, count: index >= 0 ? counts[index] : 0 };
+          })
+          .sort((a, b) => b.count - a.count || a.index - b.index)
+          .slice(0, MAX_EDITOR_COLOR_UI_OPTIONS)
+          .map(item => item.color);
+
+        mustKeep.forEach(color => {
+          if (!uniqueColors.includes(color)) uniqueColors.push(color);
+        });
+      }
+      return uniqueColors;
+    }
+    function getPaletteLabelForColor(color, fallbackIndex) {
+      const index = lastPatternData ? lastPatternData.palette.indexOf(color) : -1;
+      if (index > 0) return `编号 ${index} · ${color}`;
+      return `颜色 ${fallbackIndex + 1} · ${color}`;
+    }
+    function addColorOptionIfMissing(select, color) {
+      if (!select || !color || color === "transparent") return false;
+      color = normalizeColor(color);
+      const exists = [...select.options].some(option => normalizeColor(option.value) === color);
+      if (exists) return false;
+      const option = document.createElement("option");
+      option.value = color;
+      option.textContent = getPaletteLabelForColor(color, select.options.length);
+      option.style.backgroundColor = color;
+      option.style.color = luminance(color) < 145 ? "#ffffff" : "#243447";
+      select.appendChild(option);
+      return true;
+    }
+    function updateColorSelectPreview(id) {
+      const select = $(id);
+      const preview = $(`${id}Preview`);
+      if (!select || !preview) return;
+      const color = normalizeColor(select.value || "#000000");
+      preview.style.background = color;
+      preview.title = color;
+      const picker = $(`${id}Picker`);
+      if (picker && /^#[0-9a-f]{6}$/i.test(color)) picker.value = color;
+    }
+    function syncColorSelect(id, colors, preferredColor) {
+      const select = $(id);
+      if (!select) return null;
+      const preferred = normalizeColor(preferredColor || select.value || colors[0] || "#000000");
+      const previous = normalizeColor(select.value || preferred);
+      const merged = colors.slice();
+      [preferred, previous].forEach(color => {
+        color = normalizeColor(color);
+        if (color && color !== "transparent" && !merged.includes(color)) merged.push(color);
+      });
+      const seen = new Set();
+      const normalizedColors = merged
+        .map(normalizeColor)
+        .filter(color => color && color !== "transparent")
+        .filter(color => {
+          if (seen.has(color)) return false;
+          seen.add(color);
+          return true;
+        });
+      select.innerHTML = "";
+      normalizedColors.forEach((color, i) => {
+        const option = document.createElement("option");
+        option.value = color;
+        option.textContent = getPaletteLabelForColor(color, i);
+        option.style.backgroundColor = color;
+        option.style.color = luminance(color) < 145 ? "#ffffff" : "#243447";
+        select.appendChild(option);
+      });
+      const value = normalizedColors.includes(preferred) ? preferred : (normalizedColors.includes(previous) ? previous : normalizedColors[0]);
+      if (value) select.value = value;
+      updateColorSelectPreview(id);
+      return select.value;
+    }
+    function updateEditableColorSelectors() {
+      const colors = getEditableColorOptions();
+      if (!colors.length) return;
+      const editPreferred = selectedColor || $("editColorPicker")?.value || colors[0];
+      const editValue = syncColorSelect("editColor", colors, editPreferred);
+      syncColorSelect("replaceColor", colors, $("replaceColor")?.value || $("replaceColorPicker")?.value || editValue || colors[0]);
+      syncColorSelect("outlineColor", colors, $("outlineColor")?.value || $("outlineColorPicker")?.value || "#000000");
+      if (editValue) selectedColor = normalizeColor(editValue);
+    }
+    function setColorSelectValue(id, color) {
+      const select = $(id);
+      if (!select || !color || color === "transparent") return false;
+      color = normalizeColor(color);
+      addColorOptionIfMissing(select, color);
+      select.value = color;
+      updateColorSelectPreview(id);
+      return true;
+    }
+    function selectPaletteIndex(index) {
+      if (!lastPatternData) return;
+      selectedPaletteIndex = index;
+      const color = lastPatternData.palette[index] || "transparent";
+      if (color !== "transparent") { selectedColor = normalizeColor(color); setColorSelectValue("editColor", selectedColor); }
+      updateSelectedColorUI();
+      renderPalettes();
+    }
+    function updateSelectedColorUI() {
+      const color = selectedPaletteIndex === null || !lastPatternData ? selectedColor : lastPatternData.palette[selectedPaletteIndex];
+      $("selectedColorText").textContent = color || selectedColor;
+      $("pickedIndexText").textContent = `选中颜色编号：${selectedPaletteIndex === null ? "未选择" : selectedPaletteIndex}`;
+      $("pickedSeedText").textContent = selectedSeed ? `选中格子：${selectedSeed.x + 1}, ${selectedSeed.y + 1}` : "选中格子：未记录";
+      if (color && color !== "transparent") setColorSelectValue("editColor", color);
+    }
+    function updateMaterialsTable() {
+      const wrap = $("materialsTableWrap");
+      if (!lastPatternData) { wrap.innerHTML = ""; return; }
+      const entries = getUsedPaletteEntries().sort((a, b) => b.count - a.count);
+      const total = entries.reduce((sum, e) => sum + e.count, 0);
+      let html = `<table class="materials-table"><thead><tr><th>编号</th><th>颜色</th><th>符号</th><th>数量</th><th>建议准备</th></tr></thead><tbody>`;
+      for (const e of entries) {
+        const extra = Math.ceil(e.count * 1.08);
+        html += `<tr><td>${e.index}</td><td><span class="color-chip" style="background:${e.color}"></span><span class="mono">${e.color}</span></td><td>${e.symbol}</td><td>${e.count}</td><td>${extra}</td></tr>`;
+      }
+      html += `</tbody><tfoot><tr><th colspan="3">总计</th><th>${total}</th><th>${Math.ceil(total * 1.08)}</th></tr></tfoot></table>`;
+      wrap.innerHTML = html;
+    }
+
+    function getExportLayout(patternData = lastPatternData) {
+      if (!patternData) return { w: 1, h: 1 };
+      const opt = getPatternRenderOptions(true);
+      const entries = getUsedPaletteEntries(patternData).sort((a, b) => a.index - b.index);
+      const gridW = patternData.width * opt.cell;
+      const gridH = patternData.height * opt.cell;
+      const drawingW = gridW + opt.margin * 2;
+      const drawingH = gridH + opt.margin * 2;
+      const pagePad = 40;
+      const headerH = 66;
+      const materialGap = entries.length ? 30 : 0;
+      const materialTitleH = entries.length ? 86 : 0;
+      const itemW = 640;
+      const itemH = 118;
+      const itemGapY = 30;
+      const minHeaderW = Math.ceil(EXPORT_SITE_LABEL.length * 21 + 320);
+      const minContentW = Math.max(900, minHeaderW);
+      const contentW = Math.max(drawingW, minContentW);
+      const itemsPerRow = Math.max(1, Math.floor(contentW / itemW));
+      const materialRows = entries.length ? Math.ceil(entries.length / itemsPerRow) : 0;
+      const materialsH = entries.length ? materialTitleH + materialRows * itemH + Math.max(0, materialRows - 1) * itemGapY : 0;
+      const drawingX = pagePad + (contentW - drawingW) / 2;
+      const drawingY = pagePad + headerH;
+      const materialX = pagePad;
+      const materialY = drawingY + drawingH + materialGap;
+      const w = contentW + pagePad * 2;
+      const h = pagePad + headerH + drawingH + materialGap + materialsH + pagePad;
+      return {
+        opt, entries, pagePad, headerH, contentW, drawingW, drawingH,
+        drawingX, drawingY, gridX: drawingX + opt.margin, gridY: drawingY + opt.margin,
+        materialX, materialY, itemW, itemH, itemGapY, materialTitleH, itemsPerRow,
+        w: Math.ceil(w), h: Math.ceil(h)
+      };
+    }
+    function getExportSvgSize() {
+      const layout = getExportLayout();
+      return { w: layout.w, h: layout.h };
+    }
+    function clearExportPreview() {
+      if (!exportSvgMount) return;
+      exportSvgMount.innerHTML = '<div class="export-empty">生成图纸后，这里会显示导出效果预览。<br>预览使用 SVG 矢量渲染，放大不会变糊。</div>';
+      if ($("exportPreviewInfo")) $("exportPreviewInfo").textContent = "等待生成";
+      if ($("exportZoomValue")) $("exportZoomValue").textContent = "-";
+    }
+    function updateExportZoomLabel() {
+      if ($("exportZoomValue")) $("exportZoomValue").textContent = lastPatternData ? `${Math.round(exportPreviewZoom * 100)}%` : "-";
+    }
+    function applyExportPreviewZoom() {
+      if (!lastPatternData || !exportSvgMount) { updateExportZoomLabel(); return; }
+      const svg = exportSvgMount.querySelector("svg");
+      if (!svg) { updateExportZoomLabel(); return; }
+      const { w, h } = getExportSvgSize();
+      exportPreviewZoom = clamp(exportPreviewZoom, MIN_EXPORT_ZOOM, MAX_EXPORT_ZOOM);
+      svg.style.width = `${Math.max(1, w * exportPreviewZoom)}px`;
+      svg.style.height = `${Math.max(1, h * exportPreviewZoom)}px`;
+      updateExportZoomLabel();
+    }
+    function fitExportPreviewZoom() {
+      if (!lastPatternData || !exportPreviewWrap) return;
+      const { w, h } = getExportSvgSize();
+      const availableW = Math.max(1, exportPreviewWrap.clientWidth - 28);
+      const availableH = Math.max(1, exportPreviewWrap.clientHeight - 28);
+      exportPreviewZoom = clamp(Math.min(availableW / w, availableH / h), MIN_EXPORT_ZOOM, MAX_EXPORT_ZOOM);
+      applyExportPreviewZoom();
+      requestAnimationFrame(() => {
+        exportPreviewWrap.scrollLeft = 0;
+        exportPreviewWrap.scrollTop = 0;
+      });
+    }
+    function setExportPreviewZoom(value, evt = null) {
+      if (!lastPatternData) return;
+      const oldZoom = exportPreviewZoom || 1;
+      const newZoom = clamp(value, MIN_EXPORT_ZOOM, MAX_EXPORT_ZOOM);
+      if (Math.abs(newZoom - oldZoom) < 0.001) return;
+
+      let anchor = null;
+      const svg = exportSvgMount ? exportSvgMount.querySelector("svg") : null;
+      if (evt && svg && exportPreviewWrap) {
+        const rect = svg.getBoundingClientRect();
+        const wrapRect = exportPreviewWrap.getBoundingClientRect();
+        anchor = {
+          xInSvg: (evt.clientX - rect.left) / Math.max(oldZoom, 0.001),
+          yInSvg: (evt.clientY - rect.top) / Math.max(oldZoom, 0.001),
+          xInWrap: evt.clientX - wrapRect.left,
+          yInWrap: evt.clientY - wrapRect.top
+        };
+      }
+
+      exportPreviewZoom = newZoom;
+      applyExportPreviewZoom();
+      if (anchor) {
+        requestAnimationFrame(() => {
+          exportPreviewWrap.scrollLeft = Math.max(0, svg.offsetLeft + anchor.xInSvg * newZoom - anchor.xInWrap);
+          exportPreviewWrap.scrollTop = Math.max(0, svg.offsetTop + anchor.yInSvg * newZoom - anchor.yInWrap);
+        });
+      }
+    }
+    function renderExportPreview(autoFit = false) {
+      if (!lastPatternData || !exportSvgMount) { clearExportPreview(); return; }
+      exportSvgMount.innerHTML = buildPatternSvg(false);
+      const svg = exportSvgMount.querySelector("svg");
+      if (svg) {
+        svg.setAttribute("aria-label", "导出图纸预览");
+        svg.style.transformOrigin = "top left";
+      }
+      const { w, h } = getExportSvgSize();
+      const total = countTotalBeads();
+      if ($("exportPreviewInfo")) $("exportPreviewInfo").textContent = `${Math.round(w)} × ${Math.round(h)} px，${total} 颗`;
+      if (autoFit) fitExportPreviewZoom();
+      else applyExportPreviewZoom();
+    }
+    function updateExportSection(autoFitPreview = false) {
+      renderExportPreview(autoFitPreview);
+      updateMaterialsTable();
+    }
+    function mirrorCurrentPattern() {
+      if (!lastPatternData) return;
+      pushHistory();
+      lastPatternData.pixels = lastPatternData.pixels.map(row => row.slice().reverse());
+      if (selectedSeed) selectedSeed = { x: lastPatternData.width - 1 - selectedSeed.x, y: selectedSeed.y };
+      lastPatternData.meta = { ...(lastPatternData.meta || {}), mirroredAt: new Date().toISOString() };
+      refreshAllViews();
+      showToast("已镜像当前图案");
+    }
+    function updateStats() {
+      if (!lastPatternData) return;
+      const total = countTotalBeads();
+      const entries = getUsedPaletteEntries();
+      const beadMm = lastPatternData.meta?.beadDiameterMm || getBeadDiameterMm();
+      $("statSize").textContent = `${lastPatternData.width}×${lastPatternData.height}`;
+      $("statColors").textContent = entries.length;
+      $("statBeads").textContent = total;
+      $("statRealSize").textContent = `${formatMm(lastPatternData.width * beadMm)} × ${formatMm(lastPatternData.height * beadMm)}`;
+      updatePatternInfo();
+    }
+    function refreshAllViews() {
+      if (!lastPatternData) return;
+      drawPreviewPattern();
+      if ($("editorSection").classList.contains("active")) drawEditor();
+      if ($("editorSection").classList.contains("active")) renderPalettes();
+      else updateEditableColorSelectors();
+      updateSelectedColorUI();
+      if ($("dataSection").classList.contains("active")) updateExportSection();
+      updateStats();
+      updateUndoRedoButtons();
+    }
+    function setButtonsEnabled(enabled) {
+      ["openEditorBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "mirrorPatternBtn", "exportFitBtn", "exportActualBtn", "exportZoomOutBtn", "exportZoomInBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "zoomInBtn", "zoomOutBtn", "autoFitZoomBtn", "applyOutlineBtn"].forEach(id => {
+        const el = $(id); if (el) el.disabled = !enabled;
+      });
+      updateUndoRedoButtons();
+    }
+
+    function getEditorCellFromEvent(evt) {
+      if (!lastPatternData) return null;
+      const rect = editorCanvas.getBoundingClientRect();
+      const opt = getEditorRenderOptions();
+      const scaleX = editorCanvas.width / Math.max(1, rect.width);
+      const scaleY = editorCanvas.height / Math.max(1, rect.height);
+      const canvasX = (evt.clientX - rect.left) * scaleX;
+      const canvasY = (evt.clientY - rect.top) * scaleY;
+      const x = Math.floor((canvasX - opt.margin) / opt.cell);
+      const y = Math.floor((canvasY - opt.margin) / opt.cell);
+      if (x < 0 || y < 0 || x >= lastPatternData.width || y >= lastPatternData.height) return null;
+      return { x, y };
+    }
+    function setTool(tool) {
+      activeTool = tool;
+      [["toolPaint", "paint"], ["toolErase", "erase"], ["toolPick", "pick"]].forEach(([id, name]) => {
+        $(id).classList.toggle("active", tool === name);
+        $(id).classList.toggle("secondary", tool !== name);
+      });
+    }
+    function paintCell(cell, index) {
+      if (!lastPatternData || !cell) return false;
+      if (lastPatternData.pixels[cell.y][cell.x] === index) return false;
+      lastPatternData.pixels[cell.y][cell.x] = index;
+      return true;
+    }
+    function handleEditorAction(evt) {
+      const cell = getEditorCellFromEvent(evt);
+      if (!cell || !lastPatternData) return;
+      const key = `${cell.x},${cell.y},${activeTool}`;
+      if (key === lastPaintKey && activeTool !== "pick") return;
+      lastPaintKey = key;
+
+      if (activeTool === "pick") {
+        const index = lastPatternData.pixels[cell.y][cell.x];
+        selectedSeed = { x: cell.x, y: cell.y, index };
+        selectPaletteIndex(index);
+        showToast(index === 0 ? "已选择空豆" : `已选择颜色 ${index}`);
+        return;
+      }
+
+      const nextIndex = activeTool === "erase" ? 0 : ensureColorInPalette(selectedColor);
+      if (paintCell(cell, nextIndex)) {
+        if (!isDrawing || undoStack.length === 0 || lastPaintKey.endsWith("first")) pushHistory();
+        drawEditor();
+      }
+    }
+    function getConnectedRegion(seedX, seedY, targetIndex) {
+      const result = [];
+      if (!lastPatternData) return result;
+      const { width, height, pixels } = lastPatternData;
+      const seen = Array.from({ length: height }, () => Array(width).fill(false));
+      const queue = [[seedX, seedY]];
+      seen[seedY][seedX] = true;
+      while (queue.length) {
+        const [x, y] = queue.shift();
+        if (pixels[y][x] !== targetIndex) continue;
+        result.push([x, y]);
+        [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx, dy]) => {
+          const nx = x + dx, ny = y + dy;
+          if (nx >= 0 && ny >= 0 && nx < width && ny < height && !seen[ny][nx]) {
+            seen[ny][nx] = true; queue.push([nx, ny]);
+          }
+        });
+      }
+      return result;
+    }
+    function editSelectedColor(replacementIndex) {
+      if (!lastPatternData || selectedPaletteIndex === null) { showToast("请先取色选择一种颜色", true); return; }
+      const target = selectedPaletteIndex;
+      if (target === 0 && replacementIndex === 0) return;
+      pushHistory();
+      let changed = 0;
+      if ($("connectedOnly").checked) {
+        if (!selectedSeed || selectedSeed.index !== target) { showToast("连通区域模式需要先在画面中取色", true); return; }
+        const cells = getConnectedRegion(selectedSeed.x, selectedSeed.y, target);
+        cells.forEach(([x, y]) => { lastPatternData.pixels[y][x] = replacementIndex; changed++; });
+      } else {
+        for (let y = 0; y < lastPatternData.height; y++) {
+          for (let x = 0; x < lastPatternData.width; x++) {
+            if (lastPatternData.pixels[y][x] === target) { lastPatternData.pixels[y][x] = replacementIndex; changed++; }
+          }
+        }
+      }
+      cleanupPalette(false);
+      selectedPaletteIndex = null; selectedSeed = null;
+      refreshAllViews();
+      showToast(`已修改 ${changed} 格`);
+    }
+    function deleteSelectedColor() { editSelectedColor(0); }
+    function replaceSelectedColor() {
+      if (!lastPatternData) return;
+      const index = ensureColorInPalette($("replaceColor").value);
+      editSelectedColor(index);
+    }
+    function cleanupPalette(show = true) {
+      if (!lastPatternData) return;
+      const used = new Set([0]);
+      for (const row of lastPatternData.pixels) for (const index of row) used.add(index);
+      const newPalette = ["transparent"];
+      const remap = new Map([[0, 0]]);
+      for (let i = 1; i < lastPatternData.palette.length; i++) {
+        if (used.has(i)) { remap.set(i, newPalette.length); newPalette.push(lastPatternData.palette[i]); }
+      }
+      for (let y = 0; y < lastPatternData.height; y++) for (let x = 0; x < lastPatternData.width; x++) {
+        lastPatternData.pixels[y][x] = remap.get(lastPatternData.pixels[y][x]) ?? 0;
+      }
+      lastPatternData.palette = newPalette;
+      if (show) { refreshAllViews(); showToast("已清理未用颜色"); }
+    }
+    function fillTransparent() {
+      if (!lastPatternData) return;
+      pushHistory();
+      const index = ensureColorInPalette(selectedColor);
+      let changed = 0;
+      for (let y = 0; y < lastPatternData.height; y++) for (let x = 0; x < lastPatternData.width; x++) {
+        if (lastPatternData.pixels[y][x] === 0) { lastPatternData.pixels[y][x] = index; changed++; }
+      }
+      refreshAllViews();
+      showToast(`已填充 ${changed} 个空格`);
+    }
+
+    function isVisibleIndex(index, patternData = lastPatternData) {
+      return index !== 0 && !!patternData && patternData.palette[index] !== "transparent";
+    }
+    function getEightNeighbors(x, y) {
+      return [
+        [x - 1, y - 1], [x, y - 1], [x + 1, y - 1],
+        [x - 1, y],                 [x + 1, y],
+        [x - 1, y + 1], [x, y + 1], [x + 1, y + 1]
+      ];
+    }
+    function applyOutline() {
+      if (!lastPatternData) return;
+      const mode = $("outlineMode").value;
+      const thickness = clamp(parseInt($("outlineThickness").value, 10) || 1, 1, 6);
+      const outlineColor = normalizeColor($("outlineColor").value);
+      const outlineIndex = ensureColorInPalette(outlineColor);
+
+      pushHistory();
+      if (mode === "add") {
+        applyAddOutline(outlineIndex, thickness);
+        showToast(`已新增 ${thickness} 层描边`);
+      } else {
+        applyReplaceOutline(outlineIndex, thickness);
+        showToast(`已替换最外层 ${thickness} 圈像素`);
+      }
+      selectedSeed = null;
+      cleanupPalette(false);
+      refreshAllViews();
+    }
+    function applyAddOutline(outlineIndex, thickness) {
+      const oldData = lastPatternData;
+      const oldWidth = oldData.width;
+      const oldHeight = oldData.height;
+      const offset = thickness;
+      const newWidth = oldWidth + offset * 2;
+      const newHeight = oldHeight + offset * 2;
+      const newPixels = Array.from({ length: newHeight }, () => Array(newWidth).fill(0));
+
+      for (let y = 0; y < oldHeight; y++) {
+        for (let x = 0; x < oldWidth; x++) {
+          newPixels[y + offset][x + offset] = oldData.pixels[y][x];
+        }
+      }
+
+      const workingData = {
+        width: newWidth,
+        height: newHeight,
+        palette: oldData.palette,
+        pixels: newPixels,
+        meta: oldData.meta
+      };
+
+      for (let step = 0; step < thickness; step++) {
+        const current = workingData.pixels.map(row => row.slice());
+        const toPaint = [];
+        for (let y = 0; y < workingData.height; y++) {
+          for (let x = 0; x < workingData.width; x++) {
+            if (!isVisibleIndex(current[y][x], workingData)) continue;
+            for (const [nx, ny] of getEightNeighbors(x, y)) {
+              if (nx < 0 || ny < 0 || nx >= workingData.width || ny >= workingData.height) continue;
+              if (current[ny][nx] === 0) toPaint.push([nx, ny]);
+            }
+          }
+        }
+        for (const [x, y] of toPaint) {
+          if (workingData.pixels[y][x] === 0) workingData.pixels[y][x] = outlineIndex;
+        }
+      }
+
+      lastPatternData.width = newWidth;
+      lastPatternData.height = newHeight;
+      lastPatternData.pixels = workingData.pixels;
+    }
+    function applyReplaceOutline(outlineIndex, thickness) {
+      const width = lastPatternData.width;
+      const height = lastPatternData.height;
+      for (let step = 0; step < thickness; step++) {
+        const current = lastPatternData.pixels.map(row => row.slice());
+        const toReplace = [];
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = current[y][x];
+            if (!isVisibleIndex(idx)) continue;
+            let isBoundary = false;
+            for (const [nx, ny] of getEightNeighbors(x, y)) {
+              if (nx < 0 || ny < 0 || nx >= width || ny >= height || current[ny][nx] === 0) {
+                isBoundary = true;
+                break;
+              }
+            }
+            if (isBoundary) toReplace.push([x, y]);
+          }
+        }
+        for (const [x, y] of toReplace) lastPatternData.pixels[y][x] = outlineIndex;
+      }
+    }
+
+    function downloadText(filename, content, type = "text/plain;charset=utf-8") {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+    function downloadCanvasPng() {
+      if (!lastPatternData) return;
+      const svgText = buildPatternSvg(true);
+      const { w, h } = getExportSvgSize();
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = w;
+      canvas.height = h;
+      const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(pngBlob => {
+          if (!pngBlob) { showToast("PNG 导出失败"); return; }
+          const pngUrl = URL.createObjectURL(pngBlob);
+          const a = document.createElement("a");
+          a.href = pngUrl; a.download = "bead-pattern.png"; a.click();
+          URL.revokeObjectURL(pngUrl);
+          showToast("已导出 PNG 图纸");
+        }, "image/png");
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        showToast("PNG 导出失败");
+      };
+      img.src = url;
+    }
+    function escapeSvgAttr(value) {
+      return String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function buildPatternSvg(includeXmlDeclaration = true) {
+      if (!lastPatternData) return "";
+      const layout = getExportLayout(lastPatternData);
+      const opt = layout.opt;
+      const { width, height, palette, pixels } = lastPatternData;
+      const { w, h } = layout;
+      const lines = [];
+      if (includeXmlDeclaration) lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+      lines.push(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`,
+        '<rect width="100%" height="100%" fill="#ffffff"/>',
+        `<text x="${layout.pagePad}" y="34" font-family="Arial, Microsoft YaHei, sans-serif" font-size="40" font-weight="800" fill="#243447">${escapeSvgAttr(EXPORT_SITE_LABEL)}</text>`,
+        `<text x="${w - layout.pagePad}" y="34" text-anchor="end" font-family="Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#6f8092">${width} × ${height}｜${countTotalBeads()} 颗</text>`
+      );
+
+      lines.push(`<g id="pattern" transform="translate(${layout.drawingX}, ${layout.drawingY})">`);
+      lines.push(`<rect x="0" y="0" width="${layout.drawingW}" height="${layout.drawingH}" fill="#ffffff" stroke="rgba(88,123,157,.18)" stroke-width="1"/>`);
+      if (opt.showCoords) {
+        for (let x = 0; x < width; x += 5) lines.push(`<rect x="${opt.margin + x * opt.cell}" y="${opt.margin}" width="${opt.cell}" height="${height * opt.cell}" fill="rgba(78,162,245,.06)"/>`);
+        for (let y = 0; y < height; y += 5) lines.push(`<rect x="${opt.margin}" y="${opt.margin + y * opt.cell}" width="${width * opt.cell}" height="${opt.cell}" fill="rgba(78,162,245,.06)"/>`);
+      }
+      for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+        const index = pixels[y][x];
+        const color = palette[index];
+        const px = opt.margin + x * opt.cell;
+        const py = opt.margin + y * opt.cell;
+        if (!index || !color || color === "transparent") continue;
+        if (opt.renderMode === "squares") lines.push(`<rect x="${px + 1}" y="${py + 1}" width="${opt.cell - 2}" height="${opt.cell - 2}" fill="${escapeSvgAttr(color)}"/>`);
+        else lines.push(`<circle cx="${px + opt.cell / 2}" cy="${py + opt.cell / 2}" r="${opt.cell * .42}" fill="${escapeSvgAttr(color)}" stroke="rgba(0,0,0,.16)" stroke-width="1"/>`);
+        if (opt.labelMode !== "none" && opt.cell >= 12) {
+          const text = opt.labelMode === "symbol" ? (SYMBOLS[(index - 1) % SYMBOLS.length] || String(index)) : String(index);
+          const fill = luminance(color) < 135 ? "#ffffff" : "#202020";
+          lines.push(`<text x="${px + opt.cell / 2}" y="${py + opt.cell / 2 + opt.cell * .12}" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="${Math.max(8, Math.floor(opt.cell * .33))}" font-weight="700" fill="${fill}">${escapeSvgAttr(text)}</text>`);
+        }
+      };
+      if (opt.showGrid) {
+        for (let x = 0; x <= width; x++) lines.push(`<line x1="${opt.margin + x * opt.cell}" y1="${opt.margin}" x2="${opt.margin + x * opt.cell}" y2="${opt.margin + height * opt.cell}" stroke="rgba(42,62,82,.22)" stroke-width="1"/>`);
+        for (let y = 0; y <= height; y++) lines.push(`<line x1="${opt.margin}" y1="${opt.margin + y * opt.cell}" x2="${opt.margin + width * opt.cell}" y2="${opt.margin + y * opt.cell}" stroke="rgba(42,62,82,.22)" stroke-width="1"/>`);
+      }
+      if (opt.showCoords) {
+        lines.push(`<g font-family="Arial, Microsoft YaHei, sans-serif" font-size="11" fill="#61758a">`);
+        for (let x = 0; x < width; x += 5) lines.push(`<text x="${opt.margin + x * opt.cell + opt.cell / 2}" y="${opt.margin - 10}" text-anchor="middle" dominant-baseline="middle">${x + 1}</text>`);
+        for (let y = 0; y < height; y += 5) lines.push(`<text x="${opt.margin - 8}" y="${opt.margin + y * opt.cell + opt.cell / 2}" text-anchor="end" dominant-baseline="middle">${y + 1}</text>`);
+        lines.push(`</g>`);
+      }
+      lines.push(`</g>`);
+
+      if (layout.entries.length) {
+        lines.push(`<g id="materials" transform="translate(${layout.materialX}, ${layout.materialY})">`);
+        lines.push(`<text x="0" y="32" font-family="Arial, Microsoft YaHei, sans-serif" font-size="32" font-weight="800" fill="#243447">材料清单</text>`);
+        lines.push(`<text x="150" y="32" font-family="Arial, Microsoft YaHei, sans-serif" font-size="17" fill="#6f8092">编号 / 颜色 / 数量</text>`);
+        layout.entries.forEach((e, i) => {
+          const col = i % layout.itemsPerRow;
+          const row = Math.floor(i / layout.itemsPerRow);
+          const x = col * layout.itemW;
+          const y = layout.materialTitleH + row * (layout.itemH + layout.itemGapY);
+          const textFill = luminance(e.color) < 135 ? "#ffffff" : "#202020";
+          lines.push(`<g transform="translate(${x}, ${y})">`);
+          if (opt.renderMode === "squares") {
+            lines.push(`<rect x="0" y="6" width="96" height="96" rx="16" ry="16" fill="${escapeSvgAttr(e.color)}" stroke="rgba(0,0,0,.18)" stroke-width="1"/>`);
+            lines.push(`<text x="48" y="54" text-anchor="middle" dominant-baseline="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="39" font-weight="800" fill="${textFill}">${e.index}</text>`);
+          } else {
+            lines.push(`<circle cx="48" cy="54" r="45" fill="${escapeSvgAttr(e.color)}" stroke="rgba(0,0,0,.18)" stroke-width="1"/>`);
+            lines.push(`<text x="48" y="54" text-anchor="middle" dominant-baseline="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="39" font-weight="800" fill="${textFill}">${e.index}</text>`);
+          }
+          lines.push(`<text x="126" y="54" dominant-baseline="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="51" fill="#243447">${escapeSvgAttr(e.color)} ×${e.count}</text>`);
+          lines.push(`</g>`);
+        });
+        lines.push(`</g>`);
+      }
+
+      lines.push('</svg>');
+      return lines.join("\n");
+    }
+    function downloadSvg() {
+      if (!lastPatternData) return;
+      downloadText("bead-pattern.svg", buildPatternSvg(true), "image/svg+xml;charset=utf-8");
+      showToast("已导出 SVG 图纸");
+    }
+    function downloadCsv() {
+      if (!lastPatternData) return;
+      const lines = ["index,color,symbol,count,recommended_count"];
+      getUsedPaletteEntries().forEach(e => lines.push(`${e.index},${e.color},${e.symbol},${e.count},${Math.ceil(e.count * 1.08)}`));
+      downloadText("bead-materials.csv", lines.join("\n"), "text/csv;charset=utf-8");
+      showToast("已导出材料清单");
+    }
+    function clearAll() {
+      sourceImage = null; lastPatternData = null; selectedPaletteIndex = null; selectedSeed = null;
+      showOriginalBase = false; isOriginalCompareActive = false;
+      originalBaseTransparency = 50; patternTransparency = 0;
+      updateOpacityControlsUI();
+      undoStack = []; redoStack = []; fileInput.value = "";
+      [originalCanvas, patternCanvas, editorCanvas, editorReferenceCanvas].forEach(c => { c.width = 1; c.height = 1; });
+      previewZoom = 1;
+      initialPreviewZoom = 1;
+      exportPreviewZoom = 1;
+      patternCanvas.style.width = "1px"; patternCanvas.style.height = "1px";
+      editorReferenceCanvas.style.display = "none";
+      editorReferenceCanvas.style.opacity = "0";
+      editorCanvas.style.visibility = "visible";
+      editorCanvas.style.opacity = "1";
+      editorCanvas.style.background = "#fff";
+      editorOverlay.style.visibility = "visible";
+      $("originalInfo").textContent = "未选择图片"; $("patternInfo").textContent = "等待生成"; $("editorInfo").textContent = "尚未进入编辑模式";
+      $("statSize").textContent = "-"; $("statColors").textContent = "-"; $("statBeads").textContent = "-"; $("statRealSize").textContent = "-";
+      const paletteBox = $("paletteBox"); if (paletteBox) paletteBox.innerHTML = ""; $("editorPaletteBox").innerHTML = ""; $("materialsTableWrap").innerHTML = ""; clearExportPreview();
+      setButtonsEnabled(false); showToast("已清空");
+    }
+    function switchTab(tab) {
+      const map = { preview: ["tabPreview", "previewSection"], editor: ["tabEditor", "editorSection"], data: ["tabData", "dataSection"] };
+      Object.values(map).forEach(([btn, section]) => { $(btn).classList.remove("active"); $(section).classList.remove("active"); });
+      $(map[tab][0]).classList.add("active"); $(map[tab][1]).classList.add("active");
+      if (tab === "editor" && lastPatternData) {
+        requestAnimationFrame(() => {
+          try {
+            if (!userAdjustedZoom) autoFitZoom();
+            else drawEditor();
+            renderPalettes();
+            updateSelectedColorUI();
+          } catch (err) {
+            console.error("进入编辑模式时出错：", err);
+            showToast("编辑模式加载失败，请降低图纸宽度或颜色数量后再试", true);
+          }
+        });
+      }
+      if (tab === "data" && lastPatternData) requestAnimationFrame(() => updateExportSection(true));
+    }
+    function showToast(text, isError = false) {
+      const toast = $("toast");
+      toast.textContent = text;
+      toast.style.color = isError ? "var(--danger)" : "var(--ok)";
+      toast.classList.add("show");
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove("show"), 1700);
+    }
+
+
+
+    function safePreventDefault(evt) {
+      if (evt && evt.cancelable !== false) evt.preventDefault();
+    }
+    function touchPoint(touch) {
+      return { clientX: touch.clientX, clientY: touch.clientY };
+    }
+    function touchDistance(t1, t2) {
+      return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+    }
+    function touchMidpoint(t1, t2) {
+      return {
+        clientX: (t1.clientX + t2.clientX) / 2,
+        clientY: (t1.clientY + t2.clientY) / 2
+      };
+    }
+    function makeClientEvent(point) {
+      return { clientX: point.clientX, clientY: point.clientY, button: 0 };
+    }
+    function finishEditorTouchDrawing() {
+      if (!isDrawing) return;
+      isDrawing = false;
+      lastPaintKey = "";
+      cleanupPalette(false);
+      refreshAllViews();
+    }
+    function bindTouchPanAndPinch(wrap, getZoom, setZoom, cursorReset) {
+      if (!wrap) return;
+      let touchMode = "";
+      let startX = 0;
+      let startY = 0;
+      let startScrollLeft = 0;
+      let startScrollTop = 0;
+      let pinchStartDistance = 1;
+      let pinchStartZoom = 1;
+
+      wrap.addEventListener("touchstart", evt => {
+        if (!lastPatternData) return;
+        if (evt.touches.length === 1) {
+          const t = evt.touches[0];
+          touchMode = "pan";
+          startX = t.clientX;
+          startY = t.clientY;
+          startScrollLeft = wrap.scrollLeft;
+          startScrollTop = wrap.scrollTop;
+          wrap.style.cursor = "grabbing";
+          safePreventDefault(evt);
+        } else if (evt.touches.length >= 2) {
+          touchMode = "pinch";
+          pinchStartDistance = Math.max(1, touchDistance(evt.touches[0], evt.touches[1]));
+          pinchStartZoom = getZoom();
+          safePreventDefault(evt);
+        }
+      }, { passive: false });
+
+      wrap.addEventListener("touchmove", evt => {
+        if (!lastPatternData || !touchMode) return;
+        if (touchMode === "pinch" && evt.touches.length >= 2) {
+          const nextDistance = Math.max(1, touchDistance(evt.touches[0], evt.touches[1]));
+          const mid = touchMidpoint(evt.touches[0], evt.touches[1]);
+          setZoom(pinchStartZoom * (nextDistance / pinchStartDistance), makeClientEvent(mid));
+          safePreventDefault(evt);
+          return;
+        }
+        if (touchMode === "pan" && evt.touches.length === 1) {
+          const t = evt.touches[0];
+          wrap.scrollLeft = startScrollLeft - (t.clientX - startX);
+          wrap.scrollTop = startScrollTop - (t.clientY - startY);
+          safePreventDefault(evt);
+        }
+      }, { passive: false });
+
+      const endTouch = () => {
+        if (!touchMode) return;
+        touchMode = "";
+        wrap.style.cursor = cursorReset || "grab";
+      };
+      wrap.addEventListener("touchend", endTouch, { passive: true });
+      wrap.addEventListener("touchcancel", endTouch, { passive: true });
+    }
+
+    let editorTouchMode = "";
+    let editorPinchStartDistance = 1;
+    let editorPinchStartZoom = 16;
+    let editorPinchStartStageW = 1;
+    let editorPinchStartStageH = 1;
+    let editorPinchAnchorX = 0;
+    let editorPinchAnchorY = 0;
+
+    function beginEditorPinch(evt) {
+      const wrap = $("editorWrap");
+      const mid = touchMidpoint(evt.touches[0], evt.touches[1]);
+      const wrapRect = wrap.getBoundingClientRect();
+      editorTouchMode = "pinch";
+      editorPinchStartDistance = Math.max(1, touchDistance(evt.touches[0], evt.touches[1]));
+      editorPinchStartZoom = editorZoom;
+      editorPinchStartStageW = Math.max(1, editorStage.offsetWidth || editorCanvas.width || 1);
+      editorPinchStartStageH = Math.max(1, editorStage.offsetHeight || editorCanvas.height || 1);
+      editorPinchAnchorX = wrap.scrollLeft + (mid.clientX - wrapRect.left);
+      editorPinchAnchorY = wrap.scrollTop + (mid.clientY - wrapRect.top);
+      finishEditorTouchDrawing();
+      safePreventDefault(evt);
+    }
+
+    function updateEditorPinch(evt) {
+      const wrap = $("editorWrap");
+      const mid = touchMidpoint(evt.touches[0], evt.touches[1]);
+      const wrapRect = wrap.getBoundingClientRect();
+      const nextDistance = Math.max(1, touchDistance(evt.touches[0], evt.touches[1]));
+      const nextZoom = Math.round(editorPinchStartZoom * (nextDistance / editorPinchStartDistance));
+      setEditorZoom(nextZoom, true);
+      requestAnimationFrame(() => {
+        const newW = Math.max(1, editorStage.offsetWidth || editorCanvas.width || 1);
+        const newH = Math.max(1, editorStage.offsetHeight || editorCanvas.height || 1);
+        wrap.scrollLeft = Math.max(0, editorPinchAnchorX * (newW / editorPinchStartStageW) - (mid.clientX - wrapRect.left));
+        wrap.scrollTop = Math.max(0, editorPinchAnchorY * (newH / editorPinchStartStageH) - (mid.clientY - wrapRect.top));
+      });
+      safePreventDefault(evt);
+    }
+
+    function bindEditorTouchControls() {
+      const wrap = $("editorWrap");
+      if (!wrap) return;
+      wrap.addEventListener("touchstart", evt => {
+        if (!lastPatternData) return;
+        if (evt.touches.length >= 2) {
+          beginEditorPinch(evt);
+          return;
+        }
+        if (evt.touches.length !== 1 || editorTouchMode === "pinch") return;
+        const point = touchPoint(evt.touches[0]);
+        const fakeEvt = makeClientEvent(point);
+        const cell = getEditorCellFromEvent(fakeEvt);
+        if (!cell) return;
+        editorTouchMode = "draw";
+        isDrawing = true;
+        lastPaintKey = "";
+        if (activeTool !== "pick") pushHistory();
+        handleEditorAction(fakeEvt);
+        safePreventDefault(evt);
+      }, { passive: false });
+
+      wrap.addEventListener("touchmove", evt => {
+        if (!lastPatternData) return;
+        if (evt.touches.length >= 2) {
+          if (editorTouchMode !== "pinch") beginEditorPinch(evt);
+          updateEditorPinch(evt);
+          return;
+        }
+        if (editorTouchMode === "draw" && isDrawing && evt.touches.length === 1) {
+          handleEditorAction(makeClientEvent(touchPoint(evt.touches[0])));
+          safePreventDefault(evt);
+        }
+      }, { passive: false });
+
+      const endTouch = () => {
+        if (editorTouchMode === "draw") finishEditorTouchDrawing();
+        editorTouchMode = "";
+      };
+      wrap.addEventListener("touchend", endTouch, { passive: true });
+      wrap.addEventListener("touchcancel", endTouch, { passive: true });
+    }
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const img = new Image();
+      img.onload = () => { sourceImage = img; drawOriginalImage(img); generatePattern(); URL.revokeObjectURL(img.src); };
+      img.onerror = () => showToast("图片读取失败", true);
+      img.src = URL.createObjectURL(file);
+    });
+
+    ["beadWidth", "customColors", "brightnessRange", "contrastRange", "saturationRange", "temperatureRange"].forEach(id => {
+      $(id).addEventListener("input", () => {
+        $("beadWidthValue").textContent = $("beadWidth").value;
+        $("customColorsValue").textContent = $("customColors").value;
+        updateToneLabels();
+        if (sourceImage) generatePattern();
+      });
+    });
+    ["paletteMode", "ditherMode", "removeWhiteBg"].forEach(id => $(id).addEventListener("change", () => {
+      if (sourceImage) generatePattern();
+      else updateEditableColorSelectors();
+    }));
+    ["renderMode", "labelMode", "showGrid", "showCoords"].forEach(id => $(id).addEventListener("change", () => { if (lastPatternData) refreshAllViews(); }));
+    $("beadSizePreset").addEventListener("change", () => {
+      $("customBeadSizeBox").style.display = $("beadSizePreset").value === "custom" ? "block" : "none";
+      if (lastPatternData) refreshAllViews();
+    });
+    $("customBeadSize").addEventListener("input", () => { if (lastPatternData) refreshAllViews(); });
+    $("paletteMode").addEventListener("change", () => { $("customColorGroup").style.display = $("paletteMode").value === "custom" ? "block" : "none"; updateEditableColorSelectors(); });
+    function updateToneToggleState() {
+      const group = $("toneControlGroup");
+      const btn = $("toneToggleBtn");
+      const state = $("toneToggleState");
+      if (!group || !btn || !state) return;
+      const open = group.classList.contains("tone-open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      state.textContent = open ? "收起 ▲" : "展开 ▼";
+    }
+    $("toneToggleBtn").addEventListener("click", () => {
+      $("toneControlGroup").classList.toggle("tone-open");
+      updateToneToggleState();
+    });
+    updateToneToggleState();
+
+    $("resetToneBtn").addEventListener("click", () => {
+      ["brightnessRange", "contrastRange", "saturationRange", "temperatureRange"].forEach(id => $(id).value = 0);
+      updateToneLabels();
+      if (sourceImage) generatePattern();
+    });
+
+    const convertBtn = $("convertBtn");
+    if (convertBtn) convertBtn.addEventListener("click", generatePattern);
+    const openEditorBtn = $("openEditorBtn");
+    if (openEditorBtn) openEditorBtn.addEventListener("click", () => switchTab("editor"));
+    $("downloadPngBtn").addEventListener("click", downloadCanvasPng);
+    $("downloadSvgBtn").addEventListener("click", downloadSvg);
+    $("downloadCsvBtn").addEventListener("click", downloadCsv);
+    $("mirrorPatternBtn").addEventListener("click", mirrorCurrentPattern);
+    $("clearBtn").addEventListener("click", clearAll);
+    $("exportFitBtn").addEventListener("click", fitExportPreviewZoom);
+    $("exportActualBtn").addEventListener("click", () => setExportPreviewZoom(1));
+    $("exportZoomOutBtn").addEventListener("click", () => setExportPreviewZoom(exportPreviewZoom / 1.25));
+    $("exportZoomInBtn").addEventListener("click", () => setExportPreviewZoom(exportPreviewZoom * 1.25));
+
+    bindTouchPanAndPinch(exportPreviewWrap, () => exportPreviewZoom, setExportPreviewZoom, "grab");
+
+    exportPreviewWrap.addEventListener("wheel", evt => {
+      if (!lastPatternData) return;
+      evt.preventDefault();
+      evt.stopPropagation();
+      const factor = evt.deltaY < 0 ? 1.12 : 1 / 1.12;
+      setExportPreviewZoom(exportPreviewZoom * factor, evt);
+    }, { passive: false });
+    exportPreviewWrap.addEventListener("mousedown", evt => {
+      if (!lastPatternData || evt.button !== 0) return;
+      isExportPreviewPanning = true;
+      exportPreviewPanStartX = evt.clientX;
+      exportPreviewPanStartY = evt.clientY;
+      exportPreviewPanStartScrollLeft = exportPreviewWrap.scrollLeft;
+      exportPreviewPanStartScrollTop = exportPreviewWrap.scrollTop;
+      exportPreviewWrap.style.cursor = "grabbing";
+      evt.preventDefault();
+    });
+    exportPreviewWrap.addEventListener("mousemove", evt => {
+      if (!isExportPreviewPanning) return;
+      exportPreviewWrap.scrollLeft = exportPreviewPanStartScrollLeft - (evt.clientX - exportPreviewPanStartX);
+      exportPreviewWrap.scrollTop = exportPreviewPanStartScrollTop - (evt.clientY - exportPreviewPanStartY);
+    });
+    exportPreviewWrap.addEventListener("mouseleave", () => {
+      if (isExportPreviewPanning) {
+        isExportPreviewPanning = false;
+        exportPreviewWrap.style.cursor = "grab";
+      }
+    });
+
+    $("tabPreview").addEventListener("click", () => switchTab("preview"));
+    $("tabEditor").addEventListener("click", () => switchTab("editor"));
+    $("tabData").addEventListener("click", () => switchTab("data"));
+    $("toolPaint").addEventListener("click", () => setTool("paint"));
+    $("toolErase").addEventListener("click", () => setTool("erase"));
+    $("toolPick").addEventListener("click", () => setTool("pick"));
+    $("editColor").addEventListener("change", () => {
+      selectedColor = normalizeColor($("editColor").value);
+      updateColorSelectPreview("editColor");
+      if (lastPatternData) selectedPaletteIndex = ensureColorInPalette(selectedColor);
+      updateSelectedColorUI();
+      renderPalettes();
+    });
+    $("replaceColor").addEventListener("change", () => updateColorSelectPreview("replaceColor"));
+    $("outlineColor").addEventListener("change", () => updateColorSelectPreview("outlineColor"));
+    function bindFreeColorPicker(selectId, onChange) {
+      const picker = $(`${selectId}Picker`);
+      if (!picker) return;
+      picker.addEventListener("input", () => {
+        const color = normalizeColor(picker.value);
+        setColorSelectValue(selectId, color);
+        if (onChange) onChange(color);
+      });
+    }
+    bindFreeColorPicker("editColor", color => {
+      selectedColor = color;
+      if (lastPatternData) selectedPaletteIndex = ensureColorInPalette(selectedColor);
+      updateSelectedColorUI();
+      renderPalettes();
+    });
+    bindFreeColorPicker("replaceColor");
+    bindFreeColorPicker("outlineColor");
+    const editorZoomSlider = $("editorZoom");
+    if (editorZoomSlider) editorZoomSlider.addEventListener("input", () => setEditorZoom(parseInt(editorZoomSlider.value, 10), true));
+    $("autoFitZoomBtn").addEventListener("click", autoFitZoom);
+    $("toggleOriginalBaseBtn").addEventListener("click", toggleOriginalBase);
+    const compareOriginalBtn = $("compareOriginalBtn");
+    const stopCompareOriginal = () => setOriginalCompareActive(false);
+    compareOriginalBtn.addEventListener("mousedown", evt => { if (evt.button !== 0) return; evt.preventDefault(); setOriginalCompareActive(true); });
+    compareOriginalBtn.addEventListener("mouseup", stopCompareOriginal);
+    compareOriginalBtn.addEventListener("mouseleave", stopCompareOriginal);
+    compareOriginalBtn.addEventListener("touchstart", evt => { evt.preventDefault(); setOriginalCompareActive(true); }, { passive: false });
+    compareOriginalBtn.addEventListener("touchend", stopCompareOriginal);
+    compareOriginalBtn.addEventListener("touchcancel", stopCompareOriginal);
+    $("baseOpacityRange").addEventListener("input", () => {
+      originalBaseTransparency = parseInt($("baseOpacityRange").value, 10);
+      updateOpacityControlsUI();
+      updateEditorReferenceLayer();
+    });
+    $("patternOpacityRange").addEventListener("input", () => {
+      patternTransparency = parseInt($("patternOpacityRange").value, 10);
+      updateOpacityControlsUI();
+      updateEditorReferenceLayer();
+    });
+    $("zoomInBtn").addEventListener("click", () => setEditorZoom(editorZoom + 2, true));
+    $("zoomOutBtn").addEventListener("click", () => setEditorZoom(editorZoom - 2, true));
+    $("undoBtn").addEventListener("click", undo);
+    $("redoBtn").addEventListener("click", redo);
+    $("deleteColorBtn").addEventListener("click", deleteSelectedColor);
+    $("replaceColorBtn").addEventListener("click", replaceSelectedColor);
+    $("cleanupPaletteBtn").addEventListener("click", () => { pushHistory(); cleanupPalette(true); });
+    $("fillTransparentBtn").addEventListener("click", fillTransparent);
+    $("outlineThickness").addEventListener("input", () => { $("outlineThicknessValue").textContent = $("outlineThickness").value; });
+    $("applyOutlineBtn").addEventListener("click", applyOutline);
+
+    bindTouchPanAndPinch(patternWrap, () => previewZoom, setPreviewZoom, "grab");
+
+    patternWrap.addEventListener("wheel", evt => {
+      if (!lastPatternData) return;
+      evt.preventDefault();
+      evt.stopPropagation();
+      const factor = evt.deltaY < 0 ? 1.12 : 1 / 1.12;
+      setPreviewZoom(previewZoom * factor, evt);
+    }, { passive: false });
+    patternWrap.addEventListener("mousedown", evt => {
+      if (!lastPatternData || evt.button !== 0) return;
+      isPreviewPanning = true;
+      previewPanStartX = evt.clientX;
+      previewPanStartY = evt.clientY;
+      previewPanStartScrollLeft = patternWrap.scrollLeft;
+      previewPanStartScrollTop = patternWrap.scrollTop;
+      patternWrap.style.cursor = "grabbing";
+      evt.preventDefault();
+    });
+    patternWrap.addEventListener("mousemove", evt => {
+      if (!isPreviewPanning) return;
+      patternWrap.scrollLeft = previewPanStartScrollLeft - (evt.clientX - previewPanStartX);
+      patternWrap.scrollTop = previewPanStartScrollTop - (evt.clientY - previewPanStartY);
+    });
+    patternWrap.addEventListener("mouseleave", () => {
+      if (isPreviewPanning) {
+        isPreviewPanning = false;
+        patternWrap.style.cursor = "grab";
+      }
+    });
+
+    bindEditorTouchControls();
+
+    editorCanvas.addEventListener("contextmenu", evt => evt.preventDefault());
+    editorCanvas.addEventListener("mousedown", evt => {
+      if (!lastPatternData) return;
+      if (evt.button === 2) {
+        const wrap = $("editorWrap"); isPanning = true; panStartX = evt.clientX; panStartY = evt.clientY; panStartScrollLeft = wrap.scrollLeft; panStartScrollTop = wrap.scrollTop; wrap.style.cursor = "grabbing"; return;
+      }
+      if (evt.button !== 0) return;
+      isDrawing = true; lastPaintKey = ""; pushHistory(); handleEditorAction(evt);
+    });
+    editorCanvas.addEventListener("mousemove", evt => {
+      if (isPanning) {
+        const wrap = $("editorWrap"); wrap.scrollLeft = panStartScrollLeft - (evt.clientX - panStartX); wrap.scrollTop = panStartScrollTop - (evt.clientY - panStartY); return;
+      }
+      if (!isDrawing) {
+        const cell = getEditorCellFromEvent(evt);
+        const modeText = $("renderMode").value === "squares" ? "方格" : "圆珠";
+        $("editorInfo").textContent = cell && lastPatternData
+          ? `${lastPatternData.width} × ${lastPatternData.height}，${modeText}显示，格子 ${cell.x + 1}, ${cell.y + 1}，缩放 ${editorZoom}x`
+          : lastPatternData ? `${lastPatternData.width} × ${lastPatternData.height}，${modeText}显示，缩放 ${editorZoom}x` : "尚未进入编辑模式";
+        return;
+      }
+      handleEditorAction(evt);
+    });
+    window.addEventListener("mouseup", () => {
+      setOriginalCompareActive(false);
+      if (isPreviewPanning) { isPreviewPanning = false; patternWrap.style.cursor = "grab"; }
+      if (isExportPreviewPanning) { isExportPreviewPanning = false; exportPreviewWrap.style.cursor = "grab"; }
+      if (isPanning) { isPanning = false; $("editorWrap").style.cursor = "crosshair"; }
+      if (isDrawing) { isDrawing = false; lastPaintKey = ""; cleanupPalette(false); refreshAllViews(); }
+    });
+    window.addEventListener("blur", () => setOriginalCompareActive(false));
+    $("editorWrap").addEventListener("wheel", evt => { if (!lastPatternData) return; evt.preventDefault(); evt.stopPropagation(); setEditorZoom(editorZoom + (evt.deltaY < 0 ? 2 : -2), true); }, { passive: false });
+    window.addEventListener("resize", () => { if (lastPatternData && !userAdjustedZoom && $("editorSection").classList.contains("active")) setEditorZoom(computeFitZoom(), false); });
+    window.addEventListener("keydown", evt => {
+      const isTyping = evt.target && ["TEXTAREA", "INPUT", "SELECT"].includes(evt.target.tagName);
+      if ((evt.ctrlKey || evt.metaKey) && ["+", "=", "-", "0"].includes(evt.key) && $("editorSection").classList.contains("active")) {
+        evt.preventDefault();
+        if (evt.key === "+" || evt.key === "=") setEditorZoom(editorZoom + 2, true);
+        if (evt.key === "-") setEditorZoom(editorZoom - 2, true);
+        if (evt.key === "0") autoFitZoom();
+        return;
+      }
+      if (isTyping) return;
+      if ((evt.ctrlKey || evt.metaKey) && evt.key.toLowerCase() === "z") { evt.preventDefault(); undo(); }
+      else if ((evt.ctrlKey || evt.metaKey) && evt.key.toLowerCase() === "y") { evt.preventDefault(); redo(); }
+      else if (evt.key.toLowerCase() === "b") setTool("paint");
+      else if (evt.key.toLowerCase() === "e") setTool("erase");
+      else if (evt.key.toLowerCase() === "i") setTool("pick");
+    });
+
+    $("beadWidthValue").textContent = $("beadWidth").value;
+    $("customColorsValue").textContent = $("customColors").value;
+    $("outlineThicknessValue").textContent = $("outlineThickness").value;
+    $("customColorGroup").style.display = $("paletteMode").value === "custom" ? "block" : "none";
+    updateToneLabels();
+    updateEditableColorSelectors();
+    setColorSelectValue("outlineColor", "#000000");
+    setButtonsEnabled(false);
+    updateSelectedColorUI();
+  </script>
+</body>
+</html>
