@@ -712,7 +712,7 @@
         <div class="row-2">
           <select id="renderMode">
             <option value="beads">圆珠图纸</option>
-            <option value="squares">方格图纸</option>
+            <option value="squares" selected>方格图纸</option>
           </select>
           <select id="labelMode">
             <option value="number">颜色编号</option>
@@ -878,6 +878,7 @@
               </div>
             </div>
             <div class="export-toolbar">
+              <button id="mirrorPatternBtn" class="secondary" disabled>镜像图案</button>
               <button id="exportFitBtn" class="secondary" disabled>自动适配</button>
               <button id="exportActualBtn" class="secondary" disabled>100%</button>
               <button id="exportZoomOutBtn" class="secondary" disabled>缩小</button>
@@ -962,7 +963,7 @@
     const MIN_EXPORT_ZOOM = 0.03;
     const MAX_EXPORT_ZOOM = 8;
     const SYMBOLS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789△○□◇☆✚✦♢♣♠♥●▲■◆".split("");
-    const EXPORT_SITE_LABEL = "XXXXX";
+    const EXPORT_SITE_LABEL = "https://hc592.github.io/perler_bead_pattern_tool/";
     const ALPHA_THRESHOLD = 10;
     const WHITE_BG_THRESHOLD = 242;
     const MAX_EDITOR_COLOR_UI_OPTIONS = 512;
@@ -1940,7 +1941,8 @@
       const itemW = 640;
       const itemH = 118;
       const itemGapY = 30;
-      const minContentW = 900;
+      const minHeaderW = Math.ceil(EXPORT_SITE_LABEL.length * 21 + 320);
+      const minContentW = Math.max(900, minHeaderW);
       const contentW = Math.max(drawingW, minContentW);
       const itemsPerRow = Math.max(1, Math.floor(contentW / itemW));
       const materialRows = entries.length ? Math.ceil(entries.length / itemsPerRow) : 0;
@@ -2039,6 +2041,15 @@
       renderExportPreview(autoFitPreview);
       updateMaterialsTable();
     }
+    function mirrorCurrentPattern() {
+      if (!lastPatternData) return;
+      pushHistory();
+      lastPatternData.pixels = lastPatternData.pixels.map(row => row.slice().reverse());
+      if (selectedSeed) selectedSeed = { x: lastPatternData.width - 1 - selectedSeed.x, y: selectedSeed.y };
+      lastPatternData.meta = { ...(lastPatternData.meta || {}), mirroredAt: new Date().toISOString() };
+      refreshAllViews();
+      showToast("已镜像当前图案");
+    }
     function updateStats() {
       if (!lastPatternData) return;
       const total = countTotalBeads();
@@ -2062,7 +2073,7 @@
       updateUndoRedoButtons();
     }
     function setButtonsEnabled(enabled) {
-      ["openEditorBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "exportFitBtn", "exportActualBtn", "exportZoomOutBtn", "exportZoomInBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "zoomInBtn", "zoomOutBtn", "autoFitZoomBtn", "applyOutlineBtn"].forEach(id => {
+      ["openEditorBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "mirrorPatternBtn", "exportFitBtn", "exportActualBtn", "exportZoomOutBtn", "exportZoomInBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "zoomInBtn", "zoomOutBtn", "autoFitZoomBtn", "applyOutlineBtn"].forEach(id => {
         const el = $(id); if (el) el.disabled = !enabled;
       });
       updateUndoRedoButtons();
@@ -2669,6 +2680,7 @@
     $("downloadPngBtn").addEventListener("click", downloadCanvasPng);
     $("downloadSvgBtn").addEventListener("click", downloadSvg);
     $("downloadCsvBtn").addEventListener("click", downloadCsv);
+    $("mirrorPatternBtn").addEventListener("click", mirrorCurrentPattern);
     $("clearBtn").addEventListener("click", clearAll);
     $("exportFitBtn").addEventListener("click", fitExportPreviewZoom);
     $("exportActualBtn").addEventListener("click", () => setExportPreviewZoom(1));
