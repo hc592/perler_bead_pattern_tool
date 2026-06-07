@@ -298,17 +298,6 @@
     .export-layout { display: grid; gap: 16px; }
     .export-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
     .export-toolbar button { min-width: 92px; }
-    .export-zoom-value {
-      min-width: 76px;
-      text-align: center;
-      padding: 8px 10px;
-      border: 1px solid var(--line);
-      background: var(--panel2);
-      border-radius: 10px;
-      color: var(--accent);
-      font-variant-numeric: tabular-nums;
-      font-weight: 700;
-    }
     .export-preview-wrap {
       display: block;
       min-height: 360px;
@@ -328,6 +317,7 @@
       min-width: max-content;
       min-height: 100%;
     }
+    .export-svg-mount canvas,
     .export-svg-mount svg {
       display: block;
       max-width: none;
@@ -337,6 +327,22 @@
       transform-origin: top left;
       will-change: transform;
       shape-rendering: crispEdges;
+    }
+
+    .export-svg-mount canvas,
+    #exportPreviewCanvas {
+      display: block;
+      max-width: none !important;
+      max-height: none !important;
+      background: #ffffff;
+      box-shadow: 0 0 0 1px rgba(88, 123, 157, .18);
+      transform-origin: top left;
+      will-change: transform;
+      image-rendering: auto;
+      border-radius: 0;
+    }
+    .export-svg-mount canvas {
+      image-rendering: auto;
     }
     .export-empty {
       min-width: 240px;
@@ -415,9 +421,6 @@
     .opacity-mini-card .value { padding: 3px 0; border-radius: 8px; font-size: 12px; }
     @media (max-width: 760px) { .editor-opacity-panel { grid-template-columns: 1fr; } }
     .editor-bottom-toolbar .nav-btn { min-width: 52px; padding: 8px 12px; font-size: 18px; line-height: 1; }
-    .editor-toolbar-zoom { display: flex; align-items: center; gap: 10px; min-width: 320px; flex: 1 1 320px; }
-    .editor-toolbar-zoom .zoom-label { color: var(--muted); font-size: 14px; white-space: nowrap; }
-    .editor-toolbar-zoom input[type="range"] { flex: 1 1 auto; min-width: 140px; }
     .editor-tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
     .tool-card { background: rgba(255,255,255,.78); border: 1px solid rgba(108, 136, 166, .16); border-radius: 16px; padding: 14px; }
     .small-title { font-weight: 700; margin: 0 0 8px; }
@@ -614,15 +617,9 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
       }
-      .export-toolbar button,
-      .export-toolbar .export-zoom-value {
+      .export-toolbar button {
         width: 100%;
         min-width: 0;
-      }
-      .export-zoom-value {
-        display: grid;
-        place-items: center;
-        min-height: 44px;
       }
       .editor-wrap {
         height: 68vh;
@@ -970,11 +967,6 @@
       width: 100%;
       min-width: 0;
     }
-    .mobile-shell .export-zoom-value {
-      display: grid;
-      place-items: center;
-      min-height: 44px;
-    }
     .mobile-shell .editor-wrap {
       height: 68vh;
       min-height: 320px;
@@ -1051,15 +1043,77 @@
     /* 首页 / 工作区分屏 */
     .mobile-shell {
       grid-template-rows: 1fr;
+      position: relative;
+      isolation: isolate;
+    }
+    .mobile-shell.page-transitioning {
+      overflow-x: hidden !important;
     }
     .app-page {
       display: none;
       min-height: 100%;
       width: 100%;
+      background: inherit;
+      transform: translateZ(0);
+      backface-visibility: hidden;
     }
-    .app-page.active {
+    .app-page.active,
+    .app-page.page-entering,
+    .app-page.page-leaving {
       display: flex;
       flex-direction: column;
+    }
+    .app-page.page-entering,
+    .app-page.page-leaving {
+      will-change: transform, opacity;
+    }
+    .app-page.slide-in-forward {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      animation: pageSlideInFromRight .30s cubic-bezier(.22,.61,.36,1) both;
+    }
+    .app-page.fade-out-forward {
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+      animation: pageFadeOutStill .30s cubic-bezier(.22,.61,.36,1) both;
+    }
+    .app-page.fade-in-back {
+      position: relative;
+      z-index: 1;
+      animation: pageFadeInStill .30s cubic-bezier(.22,.61,.36,1) both;
+    }
+    .app-page.slide-out-back {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      animation: pageSlideOutToRight .30s cubic-bezier(.22,.61,.36,1) both;
+    }
+    @keyframes pageSlideInFromRight {
+      from { transform: translateX(100%); opacity: 1; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes pageFadeOutStill {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(0); opacity: 0; }
+    }
+    @keyframes pageFadeInStill {
+      from { transform: translateX(0); opacity: .35; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes pageSlideOutToRight {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .app-page.slide-in-forward,
+      .app-page.fade-out-forward,
+      .app-page.fade-in-back,
+      .app-page.slide-out-back {
+        animation: none;
+      }
     }
     .home-page header {
       flex: 0 0 auto;
@@ -1164,6 +1218,12 @@
     }
     .app-work-page .controls {
       margin-bottom: 12px;
+    }
+    .app-work-page.editor-active .controls {
+      display: none !important;
+    }
+    .app-work-page.editor-active main {
+      grid-template-columns: minmax(0, 1fr);
     }
     @media (max-width: 420px) {
       .home-big-btn {
@@ -1351,9 +1411,6 @@
               <button id="redoBtn" class="secondary nav-btn" title="下一步">→</button>
               <button id="compareOriginalBtn" class="secondary text-btn" title="按住查看原图">原图对比</button>
               <button id="toggleOriginalBaseBtn" class="secondary text-btn" title="切换原图打底">原图打底</button>
-              <button id="autoFitZoomBtn" class="secondary text-btn">自动适配</button>
-              <button id="zoomOutBtn" class="secondary text-btn">缩小</button>
-              <button id="zoomInBtn" class="secondary text-btn">放大</button>
             </div>
             <div id="editorOpacityPanel" class="editor-opacity-panel">
               <div class="opacity-mini-card">
@@ -1544,24 +1601,19 @@
             <div class="canvas-title"><span>图纸导出预览</span><span id="exportPreviewInfo">等待生成</span></div>
             <div id="exportPreviewWrap" class="canvas-wrap export-preview-wrap">
               <div id="exportSvgMount" class="export-svg-mount">
-                <div class="export-empty">生成图纸后，这里会显示导出效果预览。<br>预览使用 SVG 矢量渲染，放大不会变糊。</div>
+                <div class="export-empty">生成图纸后，这里会显示导出效果预览。<br>预览使用 Canvas 缓存渲染，放大拖动更流畅。</div>
               </div>
             </div>
             <div class="export-toolbar">
               <button id="mirrorPatternBtn" class="secondary" disabled>镜像图案</button>
               <button id="toggleBeadCodeBtn" class="secondary" disabled>清单用色卡编号</button>
-              <button id="exportFitBtn" class="secondary" disabled>自动适配</button>
-              <button id="exportActualBtn" class="secondary" disabled>100%</button>
-              <button id="exportZoomOutBtn" class="secondary" disabled>缩小</button>
-              <button id="exportZoomInBtn" class="secondary" disabled>放大</button>
-              <div id="exportZoomValue" class="export-zoom-value">-</div>
             </div>
             <div class="btn-grid export-actions">
               <button id="downloadPngBtn" class="secondary" disabled>导出 PNG 图纸</button>
               <button id="downloadSvgBtn" class="secondary" disabled>导出 SVG 图纸</button>
               <button id="downloadCsvBtn" class="secondary" disabled>导出材料清单</button>
             </div>
-            <div class="hint">这里预览的是最终导出的图纸版式。SVG 为矢量图，可以无损放大；PNG 会按同一版式导出为高清位图。</div>
+            <div class="hint">这里预览的是最终导出的图纸版式。页面内预览改为 Canvas 缓存，放大拖动更流畅；导出的 SVG 仍然是矢量图，PNG 仍按同一版式生成。</div>
           </div>
 
           <div class="canvas-card">
@@ -1640,6 +1692,7 @@
     const MAX_EXPORT_ZOOM = 8;
     const MAX_PREVIEW_BACKING_PIXELS = 12000000;
     const MAX_EDITOR_BACKING_PIXELS = 10000000;
+    const MAX_EXPORT_PREVIEW_BACKING_PIXELS = 6000000;
     const MAX_CANVAS_OUTPUT_SCALE = 4;
     const SYMBOLS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789△○□◇☆✚✦♢♣♠♥●▲■◆".split("");
     const EXPORT_SITE_LABEL = "https://hc592.github.io/perler_bead_pattern_tool/";
@@ -2788,26 +2841,221 @@
       const layout = getExportLayout();
       return { w: layout.w, h: layout.h };
     }
+    function ensureExportPreviewCanvas() {
+      if (!exportSvgMount) return null;
+      let canvas = exportSvgMount.querySelector("canvas");
+      if (!canvas) {
+        exportSvgMount.innerHTML = '<canvas id="exportPreviewCanvas" aria-label="导出图纸预览"></canvas>';
+        canvas = exportSvgMount.querySelector("canvas");
+      }
+      return canvas;
+    }
+    function getExportPreviewCanvas() {
+      return exportSvgMount ? exportSvgMount.querySelector("canvas") : null;
+    }
     function clearExportPreview() {
       if (!exportSvgMount) return;
-      exportSvgMount.innerHTML = '<div class="export-empty">生成图纸后，这里会显示导出效果预览。<br>预览使用 SVG 矢量渲染，放大不会变糊。</div>';
+      exportSvgMount.innerHTML = '<div class="export-empty">生成图纸后，这里会显示导出效果预览。<br>预览使用 Canvas 缓存渲染，放大拖动更流畅。</div>';
+      exportSvgMount.style.width = "";
+      exportSvgMount.style.height = "";
       if ($("exportPreviewInfo")) $("exportPreviewInfo").textContent = "等待生成";
-      if ($("exportZoomValue")) $("exportZoomValue").textContent = "-";
       updateBeadCodeButton();
     }
     function updateExportZoomLabel() {
-      if ($("exportZoomValue")) $("exportZoomValue").textContent = lastPatternData ? `${Math.round(exportPreviewZoom * 100)}%` : "-";
+      // 仅保留内部缩放逻辑供鼠标滚轮和触屏双指使用；界面不再显示缩放比例。
+    }
+    function getExportPreviewOutputScale(w, h) {
+      const pixels = Math.max(1, w * h);
+      const maxByPixels = Math.sqrt(MAX_EXPORT_PREVIEW_BACKING_PIXELS / pixels);
+      return clamp(Math.min(1, maxByPixels), 0.16, 1);
+    }
+    function drawExportPreviewCanvas() {
+      if (!lastPatternData || !exportSvgMount) return null;
+      const canvas = ensureExportPreviewCanvas();
+      if (!canvas) return null;
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const layout = getExportLayout(lastPatternData);
+      const opt = layout.opt;
+      const { width, height, palette, pixels } = lastPatternData;
+      const { w, h } = layout;
+      const outputScale = getExportPreviewOutputScale(w, h);
+
+      canvas.dataset.baseWidth = String(w);
+      canvas.dataset.baseHeight = String(h);
+      canvas.dataset.outputScale = String(outputScale);
+      canvas.width = Math.max(1, Math.round(w * outputScale));
+      canvas.height = Math.max(1, Math.round(h * outputScale));
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      canvas.style.maxWidth = "none";
+      canvas.style.maxHeight = "none";
+      canvas.style.display = "block";
+      canvas.style.borderRadius = "0";
+      canvas.style.transformOrigin = "top left";
+      canvas.style.willChange = "transform";
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+
+      // 页头
+      ctx.fillStyle = "#243447";
+      ctx.font = "800 40px Arial, Microsoft YaHei, sans-serif";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "alphabetic";
+      ctx.fillText(EXPORT_SITE_LABEL, layout.pagePad, 34);
+      ctx.fillStyle = "#6f8092";
+      ctx.font = "16px Arial, Microsoft YaHei, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(`${width} × ${height}｜${countTotalBeads()} 颗`, w - layout.pagePad, 34);
+
+      // 图纸主体
+      ctx.save();
+      ctx.translate(layout.drawingX, layout.drawingY);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, layout.drawingW, layout.drawingH);
+      ctx.strokeStyle = "rgba(88,123,157,.18)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0.5, 0.5, layout.drawingW - 1, layout.drawingH - 1);
+
+      if (opt.showCoords) {
+        ctx.fillStyle = "rgba(78,162,245,.06)";
+        for (let x = 0; x < width; x += 5) ctx.fillRect(opt.margin + x * opt.cell, opt.margin, opt.cell, height * opt.cell);
+        for (let y = 0; y < height; y += 5) ctx.fillRect(opt.margin, opt.margin + y * opt.cell, width * opt.cell, opt.cell);
+      }
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const index = pixels[y][x];
+          const color = palette[index];
+          if (!index || !color || color === "transparent") continue;
+          const px = opt.margin + x * opt.cell;
+          const py = opt.margin + y * opt.cell;
+          if (opt.renderMode === "squares") {
+            ctx.fillStyle = color;
+            ctx.fillRect(px, py, opt.cell, opt.cell);
+          } else {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(px + opt.cell / 2, py + opt.cell / 2, opt.cell * .42, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "rgba(0,0,0,.16)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+          if (opt.labelMode !== "none" && opt.cell >= 12) {
+            const text = opt.labelMode === "symbol" ? (SYMBOLS[(index - 1) % SYMBOLS.length] || String(index)) : String(index);
+            ctx.fillStyle = luminance(color) < 135 ? "#ffffff" : "#202020";
+            ctx.font = `700 ${Math.max(8, Math.floor(opt.cell * .33))}px Arial, Microsoft YaHei, sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(text, px + opt.cell / 2, py + opt.cell / 2 + opt.cell * .08);
+          }
+        }
+      }
+
+      if (opt.showGrid) {
+        ctx.strokeStyle = opt.gridLineColor || "rgba(42,62,82,.22)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 0; x <= width; x++) {
+          const gx = opt.margin + x * opt.cell + .5;
+          ctx.moveTo(gx, opt.margin);
+          ctx.lineTo(gx, opt.margin + height * opt.cell);
+        }
+        for (let y = 0; y <= height; y++) {
+          const gy = opt.margin + y * opt.cell + .5;
+          ctx.moveTo(opt.margin, gy);
+          ctx.lineTo(opt.margin + width * opt.cell, gy);
+        }
+        ctx.stroke();
+      }
+
+      if (opt.showCoords) {
+        ctx.fillStyle = "#61758a";
+        ctx.font = "11px Arial, Microsoft YaHei, sans-serif";
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "center";
+        for (let x = 0; x < width; x += 5) ctx.fillText(String(x + 1), opt.margin + x * opt.cell + opt.cell / 2, opt.margin - 10);
+        ctx.textAlign = "right";
+        for (let y = 0; y < height; y += 5) ctx.fillText(String(y + 1), opt.margin - 8, opt.margin + y * opt.cell + opt.cell / 2);
+      }
+      ctx.restore();
+
+      // 材料清单
+      if (layout.entries.length) {
+        ctx.save();
+        ctx.translate(layout.materialX, layout.materialY);
+        ctx.fillStyle = "#243447";
+        ctx.font = "800 32px Arial, Microsoft YaHei, sans-serif";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText("材料清单", 0, 32);
+        ctx.fillStyle = "#6f8092";
+        ctx.font = "17px Arial, Microsoft YaHei, sans-serif";
+        ctx.fillText(`图纸编号 / ${getMaterialColorTitle()} / 数量`, 150, 32);
+
+        layout.entries.forEach((e, i) => {
+          const col = i % layout.itemsPerRow;
+          const row = Math.floor(i / layout.itemsPerRow);
+          const x = col * layout.itemW;
+          const y = layout.materialTitleH + row * (layout.itemH + layout.itemGapY);
+          const textFill = luminance(e.color) < 135 ? "#ffffff" : "#202020";
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.fillStyle = e.color;
+          ctx.strokeStyle = "rgba(0,0,0,.18)";
+          ctx.lineWidth = 1;
+          if (opt.renderMode === "squares") {
+            if (ctx.roundRect) {
+              ctx.beginPath();
+              ctx.roundRect(0, 6, 96, 96, 16);
+              ctx.fill();
+              ctx.stroke();
+            } else {
+              ctx.fillRect(0, 6, 96, 96);
+              ctx.strokeRect(0.5, 6.5, 95, 95);
+            }
+          } else {
+            ctx.beginPath();
+            ctx.arc(48, 54, 45, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          }
+          ctx.fillStyle = textFill;
+          ctx.font = "800 39px Arial, Microsoft YaHei, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(getMaterialNumberLabel(e), 48, 54);
+          ctx.fillStyle = "#243447";
+          ctx.font = "51px Arial, Microsoft YaHei, sans-serif";
+          ctx.textAlign = "left";
+          ctx.fillText(`${getMaterialColorCode(e)} ×${e.count}`, 126, 54);
+          ctx.restore();
+        });
+        ctx.restore();
+      }
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      return canvas;
     }
     function applyExportPreviewZoom() {
       if (!lastPatternData || !exportSvgMount) { updateExportZoomLabel(); return; }
-      const svg = exportSvgMount.querySelector("svg");
-      if (!svg) { updateExportZoomLabel(); return; }
+      const canvas = getExportPreviewCanvas();
+      if (!canvas) { updateExportZoomLabel(); return; }
       const { w, h } = getExportSvgSize();
       exportPreviewZoom = clamp(exportPreviewZoom, MIN_EXPORT_ZOOM, MAX_EXPORT_ZOOM);
-      svg.style.width = `${Math.max(1, w)}px`;
-      svg.style.height = `${Math.max(1, h)}px`;
-      svg.style.transformOrigin = "top left";
-      svg.style.transform = `scale(${exportPreviewZoom})`;
+      canvas.style.width = `${Math.max(1, w)}px`;
+      canvas.style.height = `${Math.max(1, h)}px`;
+      canvas.style.maxWidth = "none";
+      canvas.style.maxHeight = "none";
+      canvas.style.display = "block";
+      canvas.style.borderRadius = "0";
+      canvas.style.transformOrigin = "top left";
+      canvas.style.transform = `scale(${exportPreviewZoom})`;
       exportSvgMount.style.width = `${Math.max(1, w * exportPreviewZoom)}px`;
       exportSvgMount.style.height = `${Math.max(1, h * exportPreviewZoom)}px`;
       updateExportZoomLabel();
@@ -2831,20 +3079,20 @@
       if (Math.abs(newZoom - oldZoom) < 0.001) return;
 
       let anchor = null;
-      const svg = exportSvgMount ? exportSvgMount.querySelector("svg") : null;
+      const canvas = getExportPreviewCanvas();
       if (evt && evt.zoomAnchor) {
         anchor = {
-          xInSvg: evt.zoomAnchor.xInContent,
-          yInSvg: evt.zoomAnchor.yInContent,
+          xInCanvas: evt.zoomAnchor.xInContent,
+          yInCanvas: evt.zoomAnchor.yInContent,
           xInWrap: evt.zoomAnchor.xInWrap,
           yInWrap: evt.zoomAnchor.yInWrap
         };
-      } else if (evt && svg && exportPreviewWrap) {
-        const rect = svg.getBoundingClientRect();
+      } else if (evt && canvas && exportPreviewWrap) {
+        const rect = canvas.getBoundingClientRect();
         const wrapRect = exportPreviewWrap.getBoundingClientRect();
         anchor = {
-          xInSvg: (evt.clientX - rect.left) / Math.max(oldZoom, 0.001),
-          yInSvg: (evt.clientY - rect.top) / Math.max(oldZoom, 0.001),
+          xInCanvas: (evt.clientX - rect.left) / Math.max(oldZoom, 0.001),
+          yInCanvas: (evt.clientY - rect.top) / Math.max(oldZoom, 0.001),
           xInWrap: evt.clientX - wrapRect.left,
           yInWrap: evt.clientY - wrapRect.top
         };
@@ -2852,25 +3100,23 @@
 
       exportPreviewZoom = newZoom;
       applyExportPreviewZoom();
-      if (anchor) {
+      if (anchor && canvas) {
         requestAnimationFrame(() => {
-          exportPreviewWrap.scrollLeft = Math.max(0, svg.offsetLeft + anchor.xInSvg * newZoom - anchor.xInWrap);
-          exportPreviewWrap.scrollTop = Math.max(0, svg.offsetTop + anchor.yInSvg * newZoom - anchor.yInWrap);
+          exportPreviewWrap.scrollLeft = Math.max(0, canvas.offsetLeft + anchor.xInCanvas * newZoom - anchor.xInWrap);
+          exportPreviewWrap.scrollTop = Math.max(0, canvas.offsetTop + anchor.yInCanvas * newZoom - anchor.yInWrap);
         });
       }
     }
     function renderExportPreview(autoFit = false) {
       if (!lastPatternData || !exportSvgMount) { clearExportPreview(); return; }
-      exportSvgMount.innerHTML = buildPatternSvg(false);
-      const svg = exportSvgMount.querySelector("svg");
-      if (svg) {
-        svg.setAttribute("aria-label", "导出图纸预览");
-        svg.style.transformOrigin = "top left";
-        svg.style.shapeRendering = "crispEdges";
-      }
+      const canvas = drawExportPreviewCanvas();
       const { w, h } = getExportSvgSize();
       const total = countTotalBeads();
-      if ($("exportPreviewInfo")) $("exportPreviewInfo").textContent = `${Math.round(w)} × ${Math.round(h)} px，${total} 颗`;
+      if ($("exportPreviewInfo")) {
+        const scale = canvas ? Number(canvas.dataset.outputScale || "1") : 1;
+        const tip = scale < 0.999 ? `，预览缓存 ${Math.round(scale * 100)}%` : "";
+        $("exportPreviewInfo").textContent = `${Math.round(w)} × ${Math.round(h)} px，${total} 颗${tip}`;
+      }
       if (autoFit) fitExportPreviewZoom();
       else applyExportPreviewZoom();
     }
@@ -2908,7 +3154,7 @@
       updateUndoRedoButtons();
     }
     function setButtonsEnabled(enabled) {
-      ["openEditorBtn", "openExportPageBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "mirrorPatternBtn", "toggleBeadCodeBtn", "exportFitBtn", "exportActualBtn", "exportZoomOutBtn", "exportZoomInBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "zoomInBtn", "zoomOutBtn", "autoFitZoomBtn", "applyOutlineBtn"].forEach(id => {
+      ["openEditorBtn", "openExportPageBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "mirrorPatternBtn", "toggleBeadCodeBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "applyOutlineBtn"].forEach(id => {
         const el = $(id); if (el) el.disabled = !enabled;
       });
       updateUndoRedoButtons();
@@ -3293,6 +3539,8 @@
       if (!map[tab]) tab = "preview";
       Object.values(map).forEach(([btn, section]) => { $(btn).classList.remove("active"); $(section).classList.remove("active"); });
       $(map[tab][0]).classList.add("active"); $(map[tab][1]).classList.add("active");
+      const appPage = $("appPage");
+      if (appPage) appPage.classList.toggle("editor-active", tab === "editor");
       if (tab === "editor" && lastPatternData) {
         requestAnimationFrame(() => {
           try {
@@ -3511,13 +3759,24 @@
       wrap.addEventListener("touchcancel", endTouch, { passive: true });
     }
 
-    function showPage(pageId) {
-      ["homePage", "myPatternsPage", "appPage", "exportPage"].forEach(id => {
-        const page = $(id);
-        if (page) page.classList.toggle("active", id === pageId);
-      });
-      const shell = document.querySelector(".mobile-shell");
-      if (shell) shell.scrollTop = 0;
+    const APP_PAGE_IDS = ["homePage", "myPatternsPage", "appPage", "exportPage"];
+    let currentPageId = document.querySelector(".app-page.active")?.id || "homePage";
+    let pageTransitionToken = 0;
+    let pageTransitionTimer = 0;
+
+    function removePageAnimationClasses(page) {
+      if (!page) return;
+      page.classList.remove(
+        "page-entering",
+        "page-leaving",
+        "slide-in-forward",
+        "fade-out-forward",
+        "fade-in-back",
+        "slide-out-back"
+      );
+    }
+
+    function preparePageContent(pageId) {
       if (pageId === "appPage" && lastPatternData) {
         switchTab("preview");
         requestAnimationFrame(() => {
@@ -3529,6 +3788,71 @@
       }
     }
 
+    function finalizePageTransition(pageId) {
+      const shell = document.querySelector(".mobile-shell");
+      APP_PAGE_IDS.forEach(id => {
+        const page = $(id);
+        if (!page) return;
+        removePageAnimationClasses(page);
+        page.classList.toggle("active", id === pageId);
+      });
+      if (shell) {
+        shell.classList.remove("page-transitioning");
+        shell.scrollTop = 0;
+      }
+      window.scrollTo(0, 0);
+    }
+
+    function showPage(pageId, direction = "forward") {
+      const toPage = $(pageId);
+      if (!toPage) return;
+      if (pageTransitionTimer) clearTimeout(pageTransitionTimer);
+
+      if (pageId === currentPageId) {
+        finalizePageTransition(pageId);
+        preparePageContent(pageId);
+        return;
+      }
+
+      const fromPage = $(currentPageId);
+      const shell = document.querySelector(".mobile-shell");
+      const isBack = direction === "back";
+      const token = ++pageTransitionToken;
+
+      APP_PAGE_IDS.forEach(id => {
+        const page = $(id);
+        if (!page) return;
+        removePageAnimationClasses(page);
+        if (id !== currentPageId && id !== pageId) page.classList.remove("active");
+      });
+
+      if (shell) shell.classList.add("page-transitioning");
+
+      if (fromPage) {
+        fromPage.classList.add(
+          "active",
+          "page-leaving",
+          isBack ? "slide-out-back" : "fade-out-forward"
+        );
+      }
+
+      toPage.classList.add(
+        "active",
+        "page-entering",
+        isBack ? "fade-in-back" : "slide-in-forward"
+      );
+
+      currentPageId = pageId;
+      preparePageContent(pageId);
+
+      const finish = () => {
+        if (token !== pageTransitionToken) return;
+        finalizePageTransition(pageId);
+      };
+      toPage.addEventListener("animationend", finish, { once: true });
+      pageTransitionTimer = setTimeout(finish, 380);
+    }
+
     function openImagePicker() {
       fileInput.value = "";
       fileInput.click();
@@ -3537,16 +3861,16 @@
     function setConfirmImageReady() {}
 
     $("startGenerateBtn").addEventListener("click", openImagePicker);
-    $("myPatternsBtn").addEventListener("click", () => showPage("myPatternsPage"));
-    $("myPatternsBackBtn").addEventListener("click", () => showPage("homePage"));
+    $("myPatternsBtn").addEventListener("click", () => showPage("myPatternsPage", "forward"));
+    $("myPatternsBackBtn").addEventListener("click", () => showPage("homePage", "back"));
     $("backUploadFromAppBtn").addEventListener("click", openImagePicker);
-    $("backHomeFromAppBtn").addEventListener("click", () => showPage("homePage"));
+    $("backHomeFromAppBtn").addEventListener("click", () => showPage("homePage", "back"));
     $("openExportPageBtn").addEventListener("click", () => {
       if (!lastPatternData) { showToast("请先生成图纸", true); return; }
-      showPage("exportPage");
+      showPage("exportPage", "forward");
     });
-    $("backToAppFromExportBtn").addEventListener("click", () => showPage("appPage"));
-    $("backHomeFromExportBtn").addEventListener("click", () => showPage("homePage"));
+    $("backToAppFromExportBtn").addEventListener("click", () => showPage("appPage", "back"));
+    $("backHomeFromExportBtn").addEventListener("click", () => showPage("homePage", "back"));
 
     fileInput.addEventListener("change", () => {
       const file = fileInput.files[0];
@@ -3557,7 +3881,7 @@
         lastPatternData = null;
         drawOriginalImage(img);
         generatePattern();
-        showPage("appPage");
+        showPage("appPage", "forward");
         showToast("图纸已生成");
         URL.revokeObjectURL(img.src);
       };
@@ -3623,12 +3947,8 @@
     $("toggleBeadCodeBtn").addEventListener("click", toggleBeadColorCodeMode);
     const clearBtn = $("clearBtn");
     if (clearBtn) clearBtn.addEventListener("click", clearAll);
-    $("exportFitBtn").addEventListener("click", fitExportPreviewZoom);
-    $("exportActualBtn").addEventListener("click", () => setExportPreviewZoom(1));
-    $("exportZoomOutBtn").addEventListener("click", () => setExportPreviewZoom(exportPreviewZoom / 1.25));
-    $("exportZoomInBtn").addEventListener("click", () => setExportPreviewZoom(exportPreviewZoom * 1.25));
 
-    bindTouchPanAndPinch(exportPreviewWrap, () => exportPreviewZoom, setExportPreviewZoom, "grab", () => exportSvgMount && exportSvgMount.querySelector("svg"));
+    bindTouchPanAndPinch(exportPreviewWrap, () => exportPreviewZoom, setExportPreviewZoom, "grab", () => getExportPreviewCanvas());
 
     exportPreviewWrap.addEventListener("wheel", evt => {
       if (!lastPatternData) return;
@@ -3692,7 +4012,6 @@
     bindFreeColorPicker("outlineColor");
     const editorZoomSlider = $("editorZoom");
     if (editorZoomSlider) editorZoomSlider.addEventListener("input", () => setEditorZoom(parseInt(editorZoomSlider.value, 10), true));
-    $("autoFitZoomBtn").addEventListener("click", autoFitZoom);
     $("toggleOriginalBaseBtn").addEventListener("click", toggleOriginalBase);
     const compareOriginalBtn = $("compareOriginalBtn");
     const stopCompareOriginal = () => setOriginalCompareActive(false);
@@ -3712,8 +4031,6 @@
       updateOpacityControlsUI();
       updateEditorReferenceLayer();
     });
-    $("zoomInBtn").addEventListener("click", () => setEditorZoom(editorZoom + 2, true));
-    $("zoomOutBtn").addEventListener("click", () => setEditorZoom(editorZoom - 2, true));
     $("undoBtn").addEventListener("click", undo);
     $("redoBtn").addEventListener("click", redo);
     $("deleteColorBtn").addEventListener("click", deleteSelectedColor);
