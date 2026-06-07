@@ -231,8 +231,8 @@
       padding: 12px;
     }
     canvas { max-width: 100%; max-height: 620px; border-radius: 8px; background: transparent; }
-    #patternCanvas, #editorCanvas { image-rendering: pixelated; image-rendering: crisp-edges; }
-    #patternCanvas, #editorCanvas, #editorReferenceCanvas { transform-origin: top left; backface-visibility: hidden; }
+    #patternCanvas, #patternReferenceCanvas, #editorCanvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+    #patternCanvas, #patternReferenceCanvas, #editorCanvas, #editorReferenceCanvas { transform-origin: top left; backface-visibility: hidden; }
     .pattern-wrap {
       display: block;
       min-height: 260px;
@@ -249,9 +249,32 @@
       max-height: none;
       width: auto;
       height: auto;
-      margin: 0 auto;
       border-radius: 0;
       background: #fff;
+      position: relative;
+      z-index: 2;
+    }
+    #patternReferenceCanvas {
+      position: absolute;
+      inset: 0;
+      display: none;
+      max-width: none;
+      max-height: none;
+      width: auto;
+      height: auto;
+      border-radius: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+    #patternOverlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+      background-repeat: repeat;
+    }
+    .hidden-original-buffer {
+      display: none !important;
     }
     .stats {
       display: grid;
@@ -386,8 +409,8 @@
     }
     .editor-stage { position: relative; display: block; flex: 0 0 auto; line-height: 0; margin: 0 auto; }
     #editorCanvas { display: block; max-width: none; max-height: none; width: auto; height: auto; flex: 0 0 auto; border-radius: 0; box-shadow: 0 0 0 1px rgba(88, 123, 157, .22); transform-origin: top left; position: relative; z-index: 2; background: #fff; }
-    #editorReferenceCanvas { position: absolute; inset: 0; display: none; max-width: none; max-height: none; width: auto; height: auto; border-radius: 0; pointer-events: none; z-index: 1; }
-    #editorOverlay { position: absolute; inset: 0; pointer-events: none; z-index: 3; background-repeat: repeat; }
+    #patternReferenceCanvas, #editorReferenceCanvas { position: absolute; inset: 0; display: none; max-width: none; max-height: none; width: auto; height: auto; border-radius: 0; pointer-events: none; z-index: 1; }
+    #patternOverlay, #editorOverlay { position: absolute; inset: 0; pointer-events: none; z-index: 3; background-repeat: repeat; }
     .editor-bottom-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: flex-start; margin-top: 10px; }
     .editor-bottom-toolbar button { min-width: 108px; }
     .editor-bottom-toolbar .text-btn { width: 108px; min-width: 108px; }
@@ -1309,6 +1332,49 @@
       .app-nav button { min-height: 38px; font-size: 12px !important; padding-left: 3px; padding-right: 3px; }
     }
 
+
+    /* 图纸预览页底部按钮固定为一行 */
+    #previewSection .preview-bottom-toolbar {
+      display: grid !important;
+      grid-template-columns: .85fr .85fr 1.25fr 1.25fr !important;
+      gap: 8px !important;
+      align-items: center;
+      flex-wrap: nowrap !important;
+    }
+    #previewSection .preview-bottom-toolbar button,
+    #previewSection .preview-bottom-toolbar .text-btn,
+    #previewSection .preview-bottom-toolbar .nav-btn {
+      width: 100% !important;
+      min-width: 0 !important;
+      height: 44px;
+      min-height: 44px;
+      padding: 8px 6px !important;
+      white-space: nowrap;
+    }
+    #previewSection .preview-bottom-toolbar .text-btn {
+      font-size: 14px !important;
+      font-weight: 900;
+    }
+    #previewSection .preview-bottom-toolbar .nav-btn {
+      font-size: 18px !important;
+      line-height: 1;
+    }
+    @media (max-width: 380px) {
+      #previewSection .preview-bottom-toolbar {
+        gap: 6px !important;
+        grid-template-columns: .72fr .72fr 1.28fr 1.28fr !important;
+      }
+      #previewSection .preview-bottom-toolbar button,
+      #previewSection .preview-bottom-toolbar .text-btn,
+      #previewSection .preview-bottom-toolbar .nav-btn {
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+      }
+      #previewSection .preview-bottom-toolbar .text-btn {
+        font-size: 13px !important;
+      }
+    }
+
     @media print {
       body { background: #fff; }
       header, .controls, .tabs, .editor-bottom-toolbar, .editor-tools-grid, .stats, #previewSection, #editorSection { display: none !important; }
@@ -1382,14 +1448,43 @@
       </div>
 
       <section id="previewSection" class="tab-section active">
-        <div class="canvases">
-          <div class="canvas-card">
-            <div class="canvas-title"><span>原图预览</span><span id="originalInfo">未选择图片</span></div>
-            <div class="canvas-wrap"><canvas id="originalCanvas"></canvas></div>
-          </div>
+        <div class="editor-layout">
           <div class="canvas-card">
             <div class="canvas-title"><span>拼豆图纸预览</span><span id="patternInfo">等待生成</span></div>
-            <div id="patternWrap" class="canvas-wrap pattern-wrap"><canvas id="patternCanvas"></canvas></div>
+            <div id="patternWrap" class="canvas-wrap editor-wrap pattern-wrap">
+              <div id="patternStage" class="editor-stage">
+                <canvas id="patternCanvas"></canvas>
+                <canvas id="patternReferenceCanvas"></canvas>
+                <div id="patternOverlay"></div>
+              </div>
+            </div>
+            <div class="status-line">电脑：拖动查看、滚轮缩放；手机：单指拖动，双指缩放。可直接在预览页撤销/重做，也可以按住查看原图或开启原图打底。</div>
+            <div class="editor-bottom-toolbar preview-bottom-toolbar">
+              <button id="previewUndoBtn" class="secondary nav-btn" title="上一步">←</button>
+              <button id="previewRedoBtn" class="secondary nav-btn" title="下一步">→</button>
+              <button id="previewCompareOriginalBtn" class="secondary text-btn" title="按住查看原图">原图对比</button>
+              <button id="previewToggleOriginalBaseBtn" class="secondary text-btn" title="切换原图打底">原图打底</button>
+            </div>
+            <div id="previewOpacityPanel" class="editor-opacity-panel">
+              <div class="opacity-mini-card">
+                <div class="mini-title">原图底透明度</div>
+                <div class="row">
+                  <input id="previewBaseOpacityRange" type="range" min="0" max="100" value="50" />
+                  <div id="previewBaseOpacityValue" class="value">50</div>
+                </div>
+              </div>
+              <div class="opacity-mini-card">
+                <div class="mini-title">拼豆图纸透明度</div>
+                <div class="row">
+                  <input id="previewPatternOpacityRange" type="range" min="0" max="100" value="0" />
+                  <div id="previewPatternOpacityValue" class="value">0</div>
+                </div>
+              </div>
+            </div>
+            <div class="hidden-original-buffer" aria-hidden="true">
+              <span id="originalInfo">未选择图片</span>
+              <canvas id="originalCanvas"></canvas>
+            </div>
           </div>
         </div>
       </section>
@@ -1468,27 +1563,6 @@
               </div>
             </div>
 
-
-            <div class="tool-card">
-              <p class="small-title">描边</p>
-              <label>描边颜色</label>
-              <div class="color-select-row"><div id="outlineColorPreview" class="color-preview" hidden></div><select id="outlineColor" hidden></select><input id="outlineColorPicker" type="color" value="#000000" title="自由选色" /></div>
-
-              <label style="margin-top:12px;">描边模式</label>
-              <select id="outlineMode">
-                <option value="add">新增外描边（不覆盖原图）</option>
-                <option value="replace">替换最外层像素</option>
-              </select>
-
-              <label style="margin-top:12px;">描边厚度</label>
-              <div class="row">
-                <input id="outlineThickness" type="range" min="1" max="6" value="1" />
-                <div id="outlineThicknessValue" class="value">1</div>
-              </div>
-
-              <button id="applyOutlineBtn" class="warn" style="margin-top:12px; width:100%;">应用描边</button>
-              <div class="hint">“新增外描边”会在图像外侧新增一圈或多圈描边，不会覆盖原有图案。<br>“替换最外层像素”会把当前图像最外圈像素改成描边色。</div>
-            </div>
           </div>
         </div>
       </section>
@@ -1535,14 +1609,6 @@
       </div>
 
       <div class="control-group">
-        <label>抖动 Dithering</label>
-        <select id="ditherMode">
-          <option value="none">关闭，更干净</option>
-          <option value="ordered">开启，细节更丰富但豆色更碎</option>
-        </select>
-      </div>
-
-      <div class="control-group">
         <label>图纸显示</label>
         <div class="row-2">
           <select id="renderMode">
@@ -1563,6 +1629,35 @@
           </div>
         </div>
         <label class="check-row"><input id="showCoords" type="checkbox" checked /> <span>每 5 格显示坐标辅助线</span></label>
+      </div>
+
+      <div class="control-group">
+        <label>抖动 Dithering</label>
+        <select id="ditherMode">
+          <option value="none">关闭，更干净</option>
+          <option value="ordered">开启，细节更丰富但豆色更碎</option>
+        </select>
+      </div>
+
+      <div id="outlineControlGroup" class="control-group">
+        <p class="small-title">描边</p>
+        <label>描边颜色</label>
+        <div class="color-select-row"><div id="outlineColorPreview" class="color-preview" hidden></div><select id="outlineColor" hidden></select><input id="outlineColorPicker" type="color" value="#000000" title="自由选色" /></div>
+
+        <label style="margin-top:12px;">描边模式</label>
+        <select id="outlineMode">
+          <option value="add">新增外描边（不覆盖原图）</option>
+          <option value="replace">替换最外层像素</option>
+        </select>
+
+        <label style="margin-top:12px;">描边厚度</label>
+        <div class="row">
+          <input id="outlineThickness" type="range" min="1" max="6" value="1" />
+          <div id="outlineThicknessValue" class="value">1</div>
+        </div>
+
+        <button id="applyOutlineBtn" class="warn" style="margin-top:12px; width:100%;">应用描边</button>
+        <div class="hint">“新增外描边”会在图像外侧新增一圈或多圈描边，不会覆盖原有图案。<br>“替换最外层像素”会把当前图像最外圈像素改成描边色。</div>
       </div>
 
       <div id="toneControlGroup" class="control-group">
@@ -1636,13 +1731,17 @@
     const fileInput = $("fileInput");
     const originalCanvas = $("originalCanvas");
     const patternCanvas = $("patternCanvas");
+    const patternReferenceCanvas = $("patternReferenceCanvas");
     const patternWrap = $("patternWrap");
+    const patternStage = $("patternStage");
+    const patternOverlay = $("patternOverlay");
     const editorCanvas = $("editorCanvas");
     const editorReferenceCanvas = $("editorReferenceCanvas");
     const exportPreviewWrap = $("exportPreviewWrap");
     const exportSvgMount = $("exportSvgMount");
     const originalCtx = originalCanvas.getContext("2d", { willReadFrequently: true });
     const patternCtx = patternCanvas.getContext("2d", { willReadFrequently: true });
+    const patternReferenceCtx = patternReferenceCanvas.getContext("2d", { willReadFrequently: true });
     const editorCtx = editorCanvas.getContext("2d", { willReadFrequently: true });
     const editorReferenceCtx = editorReferenceCanvas.getContext("2d", { willReadFrequently: true });
     const editorStage = $("editorStage");
@@ -2016,8 +2115,8 @@
       showToast("已重做");
     }
     function updateUndoRedoButtons() {
-      $("undoBtn").disabled = !lastPatternData || undoStack.length === 0;
-      $("redoBtn").disabled = !lastPatternData || redoStack.length === 0;
+      ["undoBtn", "previewUndoBtn"].forEach(id => { const el = $(id); if (el) el.disabled = !lastPatternData || undoStack.length === 0; });
+      ["redoBtn", "previewRedoBtn"].forEach(id => { const el = $(id); if (el) el.disabled = !lastPatternData || redoStack.length === 0; });
     }
     function ensureColorInPalette(color) {
       color = normalizeColor(color);
@@ -2091,9 +2190,49 @@
       return getMaterialCounts(patternData).reduce((sum, n, i) => i === 0 ? sum : sum + n, 0);
     }
 
+    function isWhiteGridLineSelected() {
+      return $("gridLineWhite") && $("gridLineWhite").checked;
+    }
     function getGridLineColor() {
-      const white = $("gridLineWhite") && $("gridLineWhite").checked;
-      return white ? "rgba(255,255,255,.82)" : "rgba(42,62,82,.26)";
+      // 黑线使用纯黑，避免在浅色/彩色图纸上发灰不明显。
+      return isWhiteGridLineSelected() ? "#ffffff" : "#000000";
+    }
+    function getGridLineWidth() {
+      // 相比上一版整体削弱约 30%，让普通网格线更轻一些。
+      return isWhiteGridLineSelected() ? 0.8 : 0.88;
+    }
+    function getCoordGuideLineColor() {
+      // 每 5 格辅助线固定使用黄色，不再用加粗黑/白线。
+      return "#ffd400";
+    }
+    function getCoordGuideLineWidth() {
+      // 辅助线不再加粗，和普通网格线保持一致。
+      return getGridLineWidth();
+    }
+    function drawCanvasGridLines(ctx, width, height, cell, margin, color, lineWidth = 1, step = 1, skipOuter = false) {
+      if (!width || !height || !cell) return;
+      const offset = Math.round(lineWidth) % 2 === 1 ? 0.5 : 0;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = "butt";
+      ctx.beginPath();
+      const startX = skipOuter ? step : 0;
+      const endX = skipOuter ? width - 1 : width;
+      for (let x = startX; x <= endX; x += step) {
+        const gx = margin + x * cell + offset;
+        ctx.moveTo(gx, margin);
+        ctx.lineTo(gx, margin + height * cell);
+      }
+      const startY = skipOuter ? step : 0;
+      const endY = skipOuter ? height - 1 : height;
+      for (let y = startY; y <= endY; y += step) {
+        const gy = margin + y * cell + offset;
+        ctx.moveTo(margin, gy);
+        ctx.lineTo(margin + width * cell, gy);
+      }
+      ctx.stroke();
+      ctx.restore();
     }
     function updateGridLineOptionsUI() {
       const box = $("gridLineColorOptions");
@@ -2113,6 +2252,9 @@
         showGrid: $("showGrid").checked,
         showCoords: $("showCoords").checked,
         gridLineColor: getGridLineColor(),
+        gridLineWidth: getGridLineWidth(),
+        coordGuideLineColor: getCoordGuideLineColor(),
+        coordGuideLineWidth: getCoordGuideLineWidth(),
         suppressTextLabels: false
       };
     }
@@ -2152,12 +2294,6 @@
       if (!options.transparentBackground) {
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, w, h);
-      }
-
-      if (showCoords) {
-        ctx.fillStyle = "rgba(78,162,245,.06)";
-        for (let x = 0; x < width; x += 5) ctx.fillRect(margin + x * cell, margin, cell, height * cell);
-        for (let y = 0; y < height; y += 5) ctx.fillRect(margin, margin + y * cell, width * cell, cell);
       }
 
       for (let y = 0; y < height; y++) {
@@ -2203,18 +2339,11 @@
       }
 
       if (showGrid) {
-        ctx.strokeStyle = options.gridLineColor || "rgba(42,62,82,.22)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (let x = 0; x <= width; x++) {
-          ctx.moveTo(margin + x * cell + .5, margin);
-          ctx.lineTo(margin + x * cell + .5, margin + height * cell);
-        }
-        for (let y = 0; y <= height; y++) {
-          ctx.moveTo(margin, margin + y * cell + .5);
-          ctx.lineTo(margin + width * cell, margin + y * cell + .5);
-        }
-        ctx.stroke();
+        drawCanvasGridLines(ctx, width, height, cell, margin, options.gridLineColor || getGridLineColor(), options.gridLineWidth || getGridLineWidth(), 1, false);
+      }
+      if (showCoords) {
+        // 每 5 格的辅助坐标线必须在图案和普通网格线之后绘制，否则会被色块覆盖。
+        drawCanvasGridLines(ctx, width, height, cell, margin, options.coordGuideLineColor || getCoordGuideLineColor(), options.coordGuideLineWidth || getCoordGuideLineWidth(), 5, true);
       }
 
       const coordLabelMinCell = options.coordLabelMinCell === undefined ? 12 : options.coordLabelMinCell;
@@ -2240,14 +2369,30 @@
       previewZoom = zoom;
       const baseW = getCanvasBaseWidth(patternCanvas);
       const baseH = getCanvasBaseHeight(patternCanvas);
-      patternCanvas.style.width = `${Math.max(1, baseW * zoom)}px`;
-      patternCanvas.style.height = `${Math.max(1, baseH * zoom)}px`;
+      const displayW = Math.max(1, baseW * zoom);
+      const displayH = Math.max(1, baseH * zoom);
+      patternCanvas.style.width = `${displayW}px`;
+      patternCanvas.style.height = `${displayH}px`;
+      patternCanvas.style.background = showOriginalBase ? "transparent" : "#fff";
+      patternReferenceCanvas.style.width = `${displayW}px`;
+      patternReferenceCanvas.style.height = `${displayH}px`;
+      patternStage.style.width = `${displayW}px`;
+      patternStage.style.height = `${displayH}px`;
+      patternOverlay.style.width = `${displayW}px`;
+      patternOverlay.style.height = `${displayH}px`;
+      patternOverlay.style.opacity = "0";
+      patternOverlay.style.backgroundImage = "none";
     }
     function getOriginalPreviewDisplaySize() {
-      const rect = originalCanvas.getBoundingClientRect();
+      const rect = patternWrap.getBoundingClientRect();
+      const availableW = Math.max(180, Math.round((rect.width || patternWrap.clientWidth || 320) - 24));
+      const availableH = Math.max(180, Math.round((rect.height || patternWrap.clientHeight || 360) - 24));
+      return { width: availableW, height: availableH };
+    }
+    function getPatternContentOffset() {
       return {
-        width: Math.max(1, Math.round(rect.width || originalCanvas.width || 1)),
-        height: Math.max(1, Math.round(rect.height || originalCanvas.height || 1))
+        left: (patternStage ? patternStage.offsetLeft : 0) + (patternCanvas ? patternCanvas.offsetLeft : 0),
+        top: (patternStage ? patternStage.offsetTop : 0) + (patternCanvas ? patternCanvas.offsetTop : 0)
       };
     }
     function fitPreviewZoomToOriginalSize() {
@@ -2270,8 +2415,9 @@
         const margin = (getPatternRenderOptions(false).margin || 0) * previewZoom;
         const gridDisplayW = gridW * previewZoom;
         const gridDisplayH = gridH * previewZoom;
-        const targetLeft = patternCanvas.offsetLeft + margin - Math.max(0, (patternWrap.clientWidth - gridDisplayW) / 2);
-        const targetTop = patternCanvas.offsetTop + margin - Math.max(0, (patternWrap.clientHeight - gridDisplayH) / 2);
+        const contentOffset = getPatternContentOffset();
+        const targetLeft = contentOffset.left + margin - Math.max(0, (patternWrap.clientWidth - gridDisplayW) / 2);
+        const targetTop = contentOffset.top + margin - Math.max(0, (patternWrap.clientHeight - gridDisplayH) / 2);
         patternWrap.scrollLeft = Math.max(0, targetLeft);
         patternWrap.scrollTop = Math.max(0, targetTop);
       });
@@ -2283,8 +2429,11 @@
       const baseW = lastPatternData.width * options.cell + options.margin * 2;
       const baseH = lastPatternData.height * options.cell + options.margin * 2;
       options.outputScale = getCanvasOutputScale(baseW, baseH, previewZoom, MAX_PREVIEW_BACKING_PIXELS);
+      options.transparentBackground = showOriginalBase && !isOriginalCompareActive;
       drawPatternToCanvas(patternCanvas, patternCtx, lastPatternData, options);
       applyPreviewZoom();
+      drawPreviewReferenceCanvas();
+      updatePreviewReferenceLayer();
       updatePatternInfo();
     }
     function schedulePreviewRedraw(anchor = null, delay = 90) {
@@ -2293,8 +2442,9 @@
         drawPreviewPattern();
         if (anchor) {
           requestAnimationFrame(() => {
-            patternWrap.scrollLeft = Math.max(0, patternCanvas.offsetLeft + anchor.xInCanvas * previewZoom - anchor.xInWrap);
-            patternWrap.scrollTop = Math.max(0, patternCanvas.offsetTop + anchor.yInCanvas * previewZoom - anchor.yInWrap);
+            const contentOffset = getPatternContentOffset();
+            patternWrap.scrollLeft = Math.max(0, contentOffset.left + anchor.xInCanvas * previewZoom - anchor.xInWrap);
+            patternWrap.scrollTop = Math.max(0, contentOffset.top + anchor.yInCanvas * previewZoom - anchor.yInWrap);
           });
         }
       }, delay);
@@ -2328,8 +2478,9 @@
       applyPreviewZoom();
       if (anchor) {
         requestAnimationFrame(() => {
-          patternWrap.scrollLeft = Math.max(0, patternCanvas.offsetLeft + anchor.xInCanvas * newZoom - anchor.xInWrap);
-          patternWrap.scrollTop = Math.max(0, patternCanvas.offsetTop + anchor.yInCanvas * newZoom - anchor.yInWrap);
+          const contentOffset = getPatternContentOffset();
+          patternWrap.scrollLeft = Math.max(0, contentOffset.left + anchor.xInCanvas * newZoom - anchor.xInWrap);
+          patternWrap.scrollTop = Math.max(0, contentOffset.top + anchor.yInCanvas * newZoom - anchor.yInWrap);
         });
       }
       updatePatternInfo();
@@ -2347,12 +2498,16 @@
     }
 
     function updateOpacityControlsUI() {
-      const panel = $("editorOpacityPanel");
-      const baseValue = $("baseOpacityValue");
-      const patternValue = $("patternOpacityValue");
-      if (baseValue) baseValue.textContent = String(originalBaseTransparency);
-      if (patternValue) patternValue.textContent = String(patternTransparency);
-      if (panel) panel.classList.toggle("show", !!showOriginalBase);
+      const panels = [$("previewOpacityPanel"), $("editorOpacityPanel")];
+      const baseRanges = [$("previewBaseOpacityRange"), $("baseOpacityRange")];
+      const patternRanges = [$("previewPatternOpacityRange"), $("patternOpacityRange")];
+      const baseValues = [$("previewBaseOpacityValue"), $("baseOpacityValue")];
+      const patternValues = [$("previewPatternOpacityValue"), $("patternOpacityValue")];
+      panels.forEach(panel => { if (panel) panel.classList.toggle("show", !!showOriginalBase); });
+      baseRanges.forEach(range => { if (range) range.value = String(originalBaseTransparency); });
+      patternRanges.forEach(range => { if (range) range.value = String(patternTransparency); });
+      baseValues.forEach(value => { if (value) value.textContent = String(originalBaseTransparency); });
+      patternValues.forEach(value => { if (value) value.textContent = String(patternTransparency); });
     }
 
     function getBaseCanvasOpacity() {
@@ -2361,6 +2516,84 @@
 
     function getPatternCanvasOpacity() {
       return clamp(1 - patternTransparency / 100, 0, 1);
+    }
+
+    function drawPreviewReferenceCanvas() {
+      if (!lastPatternData || !sourceImage) {
+        patternReferenceCanvas.width = 1;
+        patternReferenceCanvas.height = 1;
+        patternReferenceCanvas.style.width = "1px";
+        patternReferenceCanvas.style.height = "1px";
+        return;
+      }
+      const opt = getPreviewRenderOptions();
+      const outputScale = Math.max(0.05, parseFloat(patternCanvas.dataset.outputScale || "1") || 1);
+      const baseW = getCanvasBaseWidth(patternCanvas);
+      const baseH = getCanvasBaseHeight(patternCanvas);
+      patternReferenceCanvas.dataset.baseWidth = String(baseW);
+      patternReferenceCanvas.dataset.baseHeight = String(baseH);
+      patternReferenceCanvas.dataset.outputScale = String(outputScale);
+      patternReferenceCanvas.width = patternCanvas.width;
+      patternReferenceCanvas.height = patternCanvas.height;
+      patternReferenceCtx.setTransform(1, 0, 0, 1, 0, 0);
+      patternReferenceCtx.clearRect(0, 0, patternReferenceCanvas.width, patternReferenceCanvas.height);
+      patternReferenceCtx.imageSmoothingEnabled = true;
+      patternReferenceCtx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+      patternReferenceCtx.fillStyle = "#ffffff";
+      patternReferenceCtx.fillRect(0, 0, baseW, baseH);
+      patternReferenceCtx.drawImage(
+        sourceImage,
+        opt.margin,
+        opt.margin,
+        lastPatternData.width * opt.cell,
+        lastPatternData.height * opt.cell
+      );
+      patternReferenceCtx.strokeStyle = "rgba(88, 123, 157, .28)";
+      patternReferenceCtx.lineWidth = 1;
+      patternReferenceCtx.strokeRect(opt.margin + 0.5, opt.margin + 0.5, lastPatternData.width * opt.cell - 1, lastPatternData.height * opt.cell - 1);
+      patternReferenceCtx.setTransform(1, 0, 0, 1, 0, 0);
+      patternReferenceCanvas.style.width = patternCanvas.style.width;
+      patternReferenceCanvas.style.height = patternCanvas.style.height;
+    }
+
+    function updatePreviewReferenceLayer() {
+      const compareBtn = $("previewCompareOriginalBtn");
+      const baseBtn = $("previewToggleOriginalBaseBtn");
+      updateOpacityControlsUI();
+      if (!lastPatternData || !sourceImage) {
+        patternReferenceCanvas.style.display = "none";
+        patternReferenceCanvas.style.opacity = "0";
+        patternCanvas.style.visibility = "visible";
+        patternOverlay.style.visibility = "visible";
+        patternCanvas.style.opacity = "1";
+        patternCanvas.style.background = "#fff";
+        if (compareBtn) compareBtn.classList.remove("active");
+        if (baseBtn) baseBtn.classList.remove("active");
+        return;
+      }
+      if (isOriginalCompareActive) {
+        patternReferenceCanvas.style.display = "block";
+        patternReferenceCanvas.style.opacity = "1";
+        patternCanvas.style.visibility = "hidden";
+        patternOverlay.style.visibility = "hidden";
+        if (compareBtn) compareBtn.classList.add("active");
+        if (baseBtn) baseBtn.classList.toggle("active", showOriginalBase);
+        return;
+      }
+      patternCanvas.style.visibility = "visible";
+      patternOverlay.style.visibility = "visible";
+      patternCanvas.style.opacity = String(getPatternCanvasOpacity());
+      patternCanvas.style.background = showOriginalBase ? "transparent" : "#fff";
+      if (compareBtn) compareBtn.classList.remove("active");
+      if (showOriginalBase) {
+        patternReferenceCanvas.style.display = "block";
+        patternReferenceCanvas.style.opacity = String(getBaseCanvasOpacity());
+      } else {
+        patternReferenceCanvas.style.display = "none";
+        patternReferenceCanvas.style.opacity = "0";
+        patternCanvas.style.opacity = "1";
+      }
+      if (baseBtn) baseBtn.classList.toggle("active", showOriginalBase);
     }
 
     function drawEditorReferenceCanvas() {
@@ -2442,13 +2675,16 @@
 
     function setOriginalCompareActive(active) {
       isOriginalCompareActive = !!active;
+      updatePreviewReferenceLayer();
       updateEditorReferenceLayer();
     }
 
     function toggleOriginalBase() {
       if (!lastPatternData || !sourceImage) return;
       showOriginalBase = !showOriginalBase;
-      drawEditor();
+      drawPreviewPattern();
+      if ($("editorSection").classList.contains("active")) drawEditor();
+      updatePreviewReferenceLayer();
       updateEditorReferenceLayer();
     }
 
@@ -2508,7 +2744,9 @@
         labelMode: $("labelMode").value,
         showGrid: $("showGrid").checked,
         showCoords: $("showCoords").checked,
-        gridLineColor: getGridLineColor()
+        gridLineColor: getGridLineColor(),
+        gridLineWidth: getGridLineWidth(),
+        coordGuideLineWidth: getCoordGuideLineWidth()
       };
     }
 
@@ -2921,12 +3159,6 @@
       ctx.lineWidth = 1;
       ctx.strokeRect(0.5, 0.5, layout.drawingW - 1, layout.drawingH - 1);
 
-      if (opt.showCoords) {
-        ctx.fillStyle = "rgba(78,162,245,.06)";
-        for (let x = 0; x < width; x += 5) ctx.fillRect(opt.margin + x * opt.cell, opt.margin, opt.cell, height * opt.cell);
-        for (let y = 0; y < height; y += 5) ctx.fillRect(opt.margin, opt.margin + y * opt.cell, width * opt.cell, opt.cell);
-      }
-
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           const index = pixels[y][x];
@@ -2958,20 +3190,10 @@
       }
 
       if (opt.showGrid) {
-        ctx.strokeStyle = opt.gridLineColor || "rgba(42,62,82,.22)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (let x = 0; x <= width; x++) {
-          const gx = opt.margin + x * opt.cell + .5;
-          ctx.moveTo(gx, opt.margin);
-          ctx.lineTo(gx, opt.margin + height * opt.cell);
-        }
-        for (let y = 0; y <= height; y++) {
-          const gy = opt.margin + y * opt.cell + .5;
-          ctx.moveTo(opt.margin, gy);
-          ctx.lineTo(opt.margin + width * opt.cell, gy);
-        }
-        ctx.stroke();
+        drawCanvasGridLines(ctx, width, height, opt.cell, opt.margin, opt.gridLineColor || getGridLineColor(), opt.gridLineWidth || getGridLineWidth(), 1, false);
+      }
+      if (opt.showCoords) {
+        drawCanvasGridLines(ctx, width, height, opt.cell, opt.margin, opt.coordGuideLineColor || getCoordGuideLineColor(), opt.coordGuideLineWidth || getCoordGuideLineWidth(), 5, true);
       }
 
       if (opt.showCoords) {
@@ -3154,7 +3376,7 @@
       updateUndoRedoButtons();
     }
     function setButtonsEnabled(enabled) {
-      ["openEditorBtn", "openExportPageBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "mirrorPatternBtn", "toggleBeadCodeBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "applyOutlineBtn"].forEach(id => {
+      ["openEditorBtn", "openExportPageBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "mirrorPatternBtn", "toggleBeadCodeBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "previewUndoBtn", "previewRedoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "previewCompareOriginalBtn", "previewToggleOriginalBaseBtn", "applyOutlineBtn"].forEach(id => {
         const el = $(id); if (el) el.disabled = !enabled;
       });
       updateUndoRedoButtons();
@@ -3438,10 +3660,6 @@
 
       lines.push(`<g id="pattern" transform="translate(${layout.drawingX}, ${layout.drawingY})">`);
       lines.push(`<rect x="0" y="0" width="${layout.drawingW}" height="${layout.drawingH}" fill="#ffffff" stroke="rgba(88,123,157,.18)" stroke-width="1"/>`);
-      if (opt.showCoords) {
-        for (let x = 0; x < width; x += 5) lines.push(`<rect x="${opt.margin + x * opt.cell}" y="${opt.margin}" width="${opt.cell}" height="${height * opt.cell}" fill="rgba(78,162,245,.06)"/>`);
-        for (let y = 0; y < height; y += 5) lines.push(`<rect x="${opt.margin}" y="${opt.margin + y * opt.cell}" width="${width * opt.cell}" height="${opt.cell}" fill="rgba(78,162,245,.06)"/>`);
-      }
       for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
         const index = pixels[y][x];
         const color = palette[index];
@@ -3456,10 +3674,17 @@
           lines.push(`<text x="${px + opt.cell / 2}" y="${py + opt.cell / 2 + opt.cell * .12}" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="${Math.max(8, Math.floor(opt.cell * .33))}" font-weight="700" fill="${fill}">${escapeSvgAttr(text)}</text>`);
         }
       };
+      const gridStroke = escapeSvgAttr(opt.gridLineColor || getGridLineColor());
       if (opt.showGrid) {
-        const gridStroke = escapeSvgAttr(opt.gridLineColor || "rgba(42,62,82,.22)");
-        for (let x = 0; x <= width; x++) lines.push(`<line x1="${opt.margin + x * opt.cell}" y1="${opt.margin}" x2="${opt.margin + x * opt.cell}" y2="${opt.margin + height * opt.cell}" stroke="${gridStroke}" stroke-width="1"/>`);
-        for (let y = 0; y <= height; y++) lines.push(`<line x1="${opt.margin}" y1="${opt.margin + y * opt.cell}" x2="${opt.margin + width * opt.cell}" y2="${opt.margin + y * opt.cell}" stroke="${gridStroke}" stroke-width="1"/>`);
+        const gridStrokeWidth = opt.gridLineWidth || getGridLineWidth();
+        for (let x = 0; x <= width; x++) lines.push(`<line x1="${opt.margin + x * opt.cell}" y1="${opt.margin}" x2="${opt.margin + x * opt.cell}" y2="${opt.margin + height * opt.cell}" stroke="${gridStroke}" stroke-width="${gridStrokeWidth}" shape-rendering="crispEdges"/>`);
+        for (let y = 0; y <= height; y++) lines.push(`<line x1="${opt.margin}" y1="${opt.margin + y * opt.cell}" x2="${opt.margin + width * opt.cell}" y2="${opt.margin + y * opt.cell}" stroke="${gridStroke}" stroke-width="${gridStrokeWidth}" shape-rendering="crispEdges"/>`);
+      }
+      if (opt.showCoords) {
+        const guideStroke = escapeSvgAttr(opt.coordGuideLineColor || getCoordGuideLineColor());
+        const guideStrokeWidth = opt.coordGuideLineWidth || getCoordGuideLineWidth();
+        for (let x = 5; x < width; x += 5) lines.push(`<line x1="${opt.margin + x * opt.cell}" y1="${opt.margin}" x2="${opt.margin + x * opt.cell}" y2="${opt.margin + height * opt.cell}" stroke="${guideStroke}" stroke-width="${guideStrokeWidth}" shape-rendering="crispEdges"/>`);
+        for (let y = 5; y < height; y += 5) lines.push(`<line x1="${opt.margin}" y1="${opt.margin + y * opt.cell}" x2="${opt.margin + width * opt.cell}" y2="${opt.margin + y * opt.cell}" stroke="${guideStroke}" stroke-width="${guideStrokeWidth}" shape-rendering="crispEdges"/>`);
       }
       if (opt.showCoords) {
         lines.push(`<g font-family="Arial, Microsoft YaHei, sans-serif" font-size="11" fill="#61758a">`);
@@ -3518,11 +3743,19 @@
       originalBaseTransparency = 50; patternTransparency = 0;
       updateOpacityControlsUI();
       undoStack = []; redoStack = []; fileInput.value = "";
-      [originalCanvas, patternCanvas, editorCanvas, editorReferenceCanvas].forEach(c => { c.width = 1; c.height = 1; });
+      [originalCanvas, patternCanvas, patternReferenceCanvas, editorCanvas, editorReferenceCanvas].forEach(c => { c.width = 1; c.height = 1; });
       previewZoom = 1;
       initialPreviewZoom = 1;
       exportPreviewZoom = 1;
       patternCanvas.style.width = "1px"; patternCanvas.style.height = "1px";
+      patternReferenceCanvas.style.width = "1px"; patternReferenceCanvas.style.height = "1px";
+      patternStage.style.width = "1px"; patternStage.style.height = "1px";
+      patternReferenceCanvas.style.display = "none";
+      patternReferenceCanvas.style.opacity = "0";
+      patternCanvas.style.visibility = "visible";
+      patternCanvas.style.opacity = "1";
+      patternCanvas.style.background = "#fff";
+      patternOverlay.style.visibility = "visible";
       editorReferenceCanvas.style.display = "none";
       editorReferenceCanvas.style.opacity = "0";
       editorCanvas.style.visibility = "visible";
@@ -4012,27 +4245,41 @@
     bindFreeColorPicker("outlineColor");
     const editorZoomSlider = $("editorZoom");
     if (editorZoomSlider) editorZoomSlider.addEventListener("input", () => setEditorZoom(parseInt(editorZoomSlider.value, 10), true));
+    function bindOriginalCompareButton(id) {
+      const btn = $(id);
+      if (!btn) return;
+      const stopCompareOriginal = () => setOriginalCompareActive(false);
+      btn.addEventListener("mousedown", evt => { if (evt.button !== 0) return; evt.preventDefault(); setOriginalCompareActive(true); });
+      btn.addEventListener("mouseup", stopCompareOriginal);
+      btn.addEventListener("mouseleave", stopCompareOriginal);
+      btn.addEventListener("touchstart", evt => { evt.preventDefault(); setOriginalCompareActive(true); }, { passive: false });
+      btn.addEventListener("touchend", stopCompareOriginal);
+      btn.addEventListener("touchcancel", stopCompareOriginal);
+    }
     $("toggleOriginalBaseBtn").addEventListener("click", toggleOriginalBase);
-    const compareOriginalBtn = $("compareOriginalBtn");
-    const stopCompareOriginal = () => setOriginalCompareActive(false);
-    compareOriginalBtn.addEventListener("mousedown", evt => { if (evt.button !== 0) return; evt.preventDefault(); setOriginalCompareActive(true); });
-    compareOriginalBtn.addEventListener("mouseup", stopCompareOriginal);
-    compareOriginalBtn.addEventListener("mouseleave", stopCompareOriginal);
-    compareOriginalBtn.addEventListener("touchstart", evt => { evt.preventDefault(); setOriginalCompareActive(true); }, { passive: false });
-    compareOriginalBtn.addEventListener("touchend", stopCompareOriginal);
-    compareOriginalBtn.addEventListener("touchcancel", stopCompareOriginal);
-    $("baseOpacityRange").addEventListener("input", () => {
-      originalBaseTransparency = parseInt($("baseOpacityRange").value, 10);
-      updateOpacityControlsUI();
-      updateEditorReferenceLayer();
-    });
-    $("patternOpacityRange").addEventListener("input", () => {
-      patternTransparency = parseInt($("patternOpacityRange").value, 10);
-      updateOpacityControlsUI();
-      updateEditorReferenceLayer();
-    });
+    $("previewToggleOriginalBaseBtn").addEventListener("click", toggleOriginalBase);
+    bindOriginalCompareButton("compareOriginalBtn");
+    bindOriginalCompareButton("previewCompareOriginalBtn");
+    function bindOpacityRange(id, type) {
+      const range = $(id);
+      if (!range) return;
+      range.addEventListener("input", () => {
+        const value = parseInt(range.value, 10);
+        if (type === "base") originalBaseTransparency = value;
+        else patternTransparency = value;
+        updateOpacityControlsUI();
+        updatePreviewReferenceLayer();
+        updateEditorReferenceLayer();
+      });
+    }
+    bindOpacityRange("previewBaseOpacityRange", "base");
+    bindOpacityRange("baseOpacityRange", "base");
+    bindOpacityRange("previewPatternOpacityRange", "pattern");
+    bindOpacityRange("patternOpacityRange", "pattern");
     $("undoBtn").addEventListener("click", undo);
     $("redoBtn").addEventListener("click", redo);
+    $("previewUndoBtn").addEventListener("click", undo);
+    $("previewRedoBtn").addEventListener("click", redo);
     $("deleteColorBtn").addEventListener("click", deleteSelectedColor);
     $("replaceColorBtn").addEventListener("click", replaceSelectedColor);
     $("cleanupPaletteBtn").addEventListener("click", () => { pushHistory(); cleanupPalette(true); });
