@@ -232,6 +232,7 @@
     }
     canvas { max-width: 100%; max-height: 620px; border-radius: 8px; background: transparent; }
     #patternCanvas, #editorCanvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+    #patternCanvas, #editorCanvas, #editorReferenceCanvas { transform-origin: top left; backface-visibility: hidden; }
     .pattern-wrap {
       display: block;
       min-height: 260px;
@@ -333,6 +334,9 @@
       max-height: none;
       background: #ffffff;
       box-shadow: 0 0 0 1px rgba(88, 123, 157, .18);
+      transform-origin: top left;
+      will-change: transform;
+      shape-rendering: crispEdges;
     }
     .export-empty {
       min-width: 240px;
@@ -704,6 +708,547 @@
       .file-action-row { grid-template-columns: 1fr; }
     }
 
+
+
+    /* 桌面端按手机 9:16 比例居中显示；真实手机端不再套手机边框，直接全屏铺开 */
+    html {
+      width: 100%;
+      min-height: 100%;
+      scrollbar-gutter: auto;
+    }
+    body {
+      width: 100%;
+      min-height: 100dvh;
+      margin: 0;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at top left, rgba(78,162,245,.18), transparent 34rem),
+        radial-gradient(circle at bottom right, rgba(255,192,88,.16), transparent 34rem),
+        linear-gradient(180deg, #f5f9fd 0%, #eef4fa 100%);
+    }
+    .mobile-shell {
+      width: 100%;
+      min-height: 100dvh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at top left, rgba(78,162,245,.14), transparent 24rem),
+        radial-gradient(circle at bottom right, rgba(255,192,88,.12), transparent 24rem),
+        linear-gradient(180deg, #f5f9fd 0%, #eef4fa 100%);
+    }
+
+    @media (min-width: 721px) {
+      html {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        height: 100dvh;
+        min-height: 100dvh;
+        padding: 8px;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+      }
+      .mobile-shell {
+        width: min(calc(100vw - 16px), calc((100dvh - 16px) * 9 / 16), 480px);
+        height: min(calc(100dvh - 16px), calc((100vw - 16px) * 16 / 9), 853px);
+        min-height: 0;
+        aspect-ratio: 9 / 16;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
+    }
+
+    @media (max-width: 720px) {
+      html {
+        height: auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      body {
+        padding: 0;
+        display: block;
+        overflow-y: auto;
+      }
+      .mobile-shell {
+        width: 100%;
+        max-width: none;
+        min-height: 100dvh;
+        height: auto;
+        aspect-ratio: auto;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+    }
+    .mobile-shell::-webkit-scrollbar { width: 0; height: 0; }
+    .mobile-shell header {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 16px 12px 6px;
+    }
+    .mobile-shell h1 {
+      font-size: 24px;
+      letter-spacing: .02em;
+      margin-bottom: 8px;
+    }
+    .mobile-shell .pixel-title {
+      gap: 4px;
+    }
+    .mobile-shell .pixel-title .char {
+      border-width: 2px;
+      border-radius: 5px;
+      box-shadow: 3px 3px 0 rgba(36,52,71,.16), inset 0 -2px 0 rgba(0,0,0,.10);
+      padding: .08em .1em;
+    }
+    .mobile-shell .subtitle {
+      font-size: 13px;
+      line-height: 1.55;
+      max-width: none;
+    }
+    .mobile-shell main {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding: 10px 10px 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+      align-content: start;
+      overflow: visible;
+    }
+    .mobile-shell .panel {
+      border-radius: 14px;
+    }
+    .mobile-shell .controls,
+    .mobile-shell .workspace {
+      position: static;
+      top: auto;
+      align-self: auto;
+      max-height: none;
+      overflow: visible;
+      padding: 12px;
+    }
+    .mobile-shell .control-group {
+      padding: 12px 0;
+    }
+    .mobile-shell #toneControlGroup {
+      padding: 8px 0 12px;
+    }
+    .mobile-shell .tone-desktop-title {
+      display: none !important;
+    }
+    .mobile-shell .tone-toggle-btn {
+      display: flex !important;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 800;
+    }
+    .mobile-shell #toneControlGroup .tone-fields {
+      display: none;
+      padding-top: 10px;
+    }
+    .mobile-shell #toneControlGroup.tone-open .tone-fields {
+      display: block;
+    }
+    .mobile-shell label {
+      font-size: 13px;
+    }
+    .mobile-shell input[type="file"],
+    .mobile-shell select,
+    .mobile-shell textarea,
+    .mobile-shell input[type="color"],
+    .mobile-shell input[type="number"],
+    .mobile-shell button {
+      font-size: 16px;
+    }
+    .mobile-shell button {
+      min-height: 44px;
+      padding: 10px 10px;
+    }
+    .mobile-shell .row {
+      grid-template-columns: minmax(0, 1fr) 64px;
+      gap: 8px;
+    }
+    .mobile-shell .row-2,
+    .mobile-shell .btn-grid.export-actions {
+      grid-template-columns: 1fr;
+    }
+    .mobile-shell .row-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .mobile-shell .btn-grid {
+      gap: 8px;
+    }
+    .mobile-shell .value {
+      padding: 7px 0;
+      font-size: 13px;
+    }
+    .mobile-shell .stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      height: auto;
+      min-height: 0;
+      gap: 8px;
+    }
+    .mobile-shell .stat {
+      min-height: 74px;
+      padding: 10px;
+    }
+    .mobile-shell .stat .num {
+      font-size: 18px;
+    }
+    .mobile-shell .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      height: auto;
+      min-height: 0;
+      overflow: visible;
+    }
+    .mobile-shell .tab-btn,
+    .mobile-shell .tab-btn.active,
+    .mobile-shell .tab-btn:focus,
+    .mobile-shell .tab-btn:active {
+      width: 100%;
+      min-width: 0;
+      flex-basis: auto;
+      height: 44px;
+      font-size: 14px;
+      border-radius: 12px;
+      padding: 0;
+    }
+    .mobile-shell .tab-section.active {
+      display: grid;
+    }
+    .mobile-shell .canvases {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    .mobile-shell .canvas-card {
+      padding: 10px;
+      border-radius: 14px;
+    }
+    .mobile-shell .canvas-title {
+      font-size: 12px;
+      gap: 6px;
+    }
+    .mobile-shell .canvas-wrap {
+      min-height: 180px;
+      padding: 8px;
+    }
+    .mobile-shell canvas {
+      max-height: 56vh;
+    }
+    .mobile-shell .pattern-wrap {
+      min-height: 240px;
+      max-height: 68vh;
+      touch-action: none;
+    }
+    .mobile-shell .export-preview-wrap {
+      min-height: 300px;
+      max-height: 68vh;
+      padding: 8px;
+      touch-action: none;
+    }
+    .mobile-shell .export-toolbar {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .mobile-shell .export-toolbar button,
+    .mobile-shell .export-toolbar .export-zoom-value {
+      width: 100%;
+      min-width: 0;
+    }
+    .mobile-shell .export-zoom-value {
+      display: grid;
+      place-items: center;
+      min-height: 44px;
+    }
+    .mobile-shell .editor-wrap {
+      height: 68vh;
+      min-height: 320px;
+      max-height: none;
+      padding: 8px;
+      touch-action: none;
+    }
+    .mobile-shell .editor-bottom-toolbar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .mobile-shell .editor-bottom-toolbar button,
+    .mobile-shell .editor-bottom-toolbar .text-btn,
+    .mobile-shell .editor-bottom-toolbar .nav-btn {
+      width: 100%;
+      min-width: 0;
+    }
+    .mobile-shell .editor-bottom-toolbar .nav-btn {
+      font-size: 18px;
+    }
+    .mobile-shell .editor-opacity-panel {
+      grid-template-columns: 1fr;
+    }
+    .mobile-shell .opacity-mini-card {
+      grid-template-columns: 88px minmax(0, 1fr);
+      padding: 6px 8px;
+    }
+    .mobile-shell .opacity-mini-card .mini-title {
+      font-size: 11px;
+    }
+    .mobile-shell .editor-tools-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+    .mobile-shell .tool-card {
+      padding: 12px;
+      border-radius: 14px;
+    }
+    .mobile-shell .palette {
+      max-height: 150px;
+    }
+    .mobile-shell .swatch {
+      width: 38px;
+      height: 38px;
+    }
+    .mobile-shell .materials-table {
+      min-width: 520px;
+    }
+    .mobile-shell #materialsTableWrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width: 420px), (max-height: 760px) {
+      .mobile-shell header { padding-top: 14px; }
+      .mobile-shell main { padding-left: 8px; padding-right: 8px; }
+      .mobile-shell .controls,
+      .mobile-shell .workspace { padding: 10px; }
+      .mobile-shell .stat { min-height: 68px; }
+      .mobile-shell .stat .name { font-size: 11px; }
+      .mobile-shell .tab-btn,
+      .mobile-shell .tab-btn.active,
+      .mobile-shell .tab-btn:focus,
+      .mobile-shell .tab-btn:active { font-size: 13px; }
+      .mobile-shell .editor-bottom-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .mobile-shell .export-toolbar { grid-template-columns: 1fr 1fr; }
+      .mobile-shell .row-3 { grid-template-columns: 1fr; }
+      .mobile-shell .file-action-row { grid-template-columns: 1fr; }
+    }
+
+
+
+
+    /* 首页 / 工作区分屏 */
+    .mobile-shell {
+      grid-template-rows: 1fr;
+    }
+    .app-page {
+      display: none;
+      min-height: 100%;
+      width: 100%;
+    }
+    .app-page.active {
+      display: flex;
+      flex-direction: column;
+    }
+    .home-page header {
+      flex: 0 0 auto;
+    }
+    .home-main,
+    .my-patterns-main {
+      flex: 1 1 auto;
+      align-content: start;
+    }
+    .home-card {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+    .home-big-btn {
+      width: 100%;
+      min-height: 86px !important;
+      border-radius: 18px;
+      font-size: 22px !important;
+      font-weight: 900;
+      letter-spacing: .06em;
+      box-shadow: 0 10px 24px rgba(58,83,110,.10);
+    }
+    .home-big-btn.secondary {
+      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(245,249,253,.96));
+    }
+    .home-hint {
+      text-align: center;
+      margin-top: 2px;
+    }
+    .hidden-file-input {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .page-topbar,
+    .app-nav {
+      flex: 0 0 auto;
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) 54px;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 10px 4px;
+    }
+    .app-nav {
+      grid-template-columns: 1fr 72px;
+      padding-bottom: 0;
+    }
+    .page-topbar .back-btn {
+      width: 44px;
+      min-width: 44px;
+      min-height: 42px;
+      padding: 0;
+      font-size: 20px !important;
+    }
+    .page-title {
+      grid-column: 2;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--text);
+    }
+    .upload-card {
+      position: static !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+    .upload-file-group {
+      border-bottom: 1px solid rgba(112,138,164,.12);
+    }
+    .upload-actions {
+      margin-top: 12px;
+    }
+    .primary-large {
+      min-height: 58px !important;
+      font-size: 18px !important;
+      font-weight: 900;
+    }
+    .empty-card {
+      padding: 24px 18px;
+      min-height: 260px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      align-content: center;
+      gap: 10px;
+    }
+    .empty-icon {
+      font-size: 42px;
+      line-height: 1;
+    }
+    .empty-title {
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .app-work-page main {
+      padding-top: 8px;
+    }
+    .app-work-page .controls {
+      margin-bottom: 12px;
+    }
+    @media (max-width: 420px) {
+      .home-big-btn {
+        min-height: 78px !important;
+        font-size: 20px !important;
+      }
+      .page-topbar,
+      .app-nav {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+    }
+
+
+    /* 本版：工作界面顶部三按钮、导出独立页面、网格线颜色选择 */
+    .app-nav {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+    .app-nav button {
+      min-width: 0;
+      width: 100%;
+      min-height: 40px;
+      padding: 6px 5px;
+      border-radius: 11px;
+      font-size: 13px !important;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .export-work-page main,
+    .export-page-main {
+      flex: 1 1 auto;
+      align-content: start;
+      padding-top: 8px;
+    }
+    .export-topbar {
+      grid-template-columns: 76px minmax(0, 1fr) 76px;
+    }
+    .export-topbar .back-btn,
+    .export-topbar .export-home-btn {
+      width: 64px;
+      min-width: 64px;
+      min-height: 42px;
+      padding: 0 8px;
+      font-size: 15px !important;
+      font-weight: 900;
+    }
+    .export-page-section {
+      display: grid !important;
+      gap: 16px;
+    }
+    .grid-line-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .grid-line-row .check-row {
+      margin-top: 0;
+      white-space: nowrap;
+    }
+    .grid-line-options {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: nowrap;
+      margin: 0;
+    }
+    .grid-line-options .check-row {
+      margin-top: 0;
+      font-size: 12px;
+      gap: 5px;
+    }
+    .mobile-shell .stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    @media (max-width: 420px), (max-height: 760px) {
+      .mobile-shell .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .app-nav { gap: 8px; }
+      .app-nav button { min-height: 38px; font-size: 12px !important; padding-left: 3px; padding-right: 3px; }
+    }
+
     @media print {
       body { background: #fff; }
       header, .controls, .tabs, .editor-bottom-toolbar, .editor-tools-grid, .stats, #previewSection, #editorSection { display: none !important; }
@@ -714,7 +1259,9 @@
   </style>
 </head>
 <body>
-  <header>
+  <div class="mobile-shell">
+    <div id="homePage" class="app-page home-page active">
+      <header>
     <h1 class="pixel-title" aria-label="拼豆图纸生成工具">
       <span class="char c1">拼</span>
       <span class="char c2">豆</span>
@@ -729,128 +1276,49 @@
       上传图片后自动转换为拼豆图纸：圆珠预览、格子编号、颜色用量统计、编辑修补、图纸导出预览、导出 PNG / SVG / 材料清单。所有处理都在浏览器本地完成。
     </div>
   </header>
+      <main class="home-main">
+        <section class="panel home-card">
+          <button id="startGenerateBtn" class="home-big-btn">生成图纸</button>
+          <button id="myPatternsBtn" class="home-big-btn secondary">我的图纸</button>
+          <div class="hint home-hint">点击“生成图纸”会直接选择图片，选好后自动进入图纸设置、编辑和导出界面。</div>
+        </section>
+      </main>
+    </div>
 
-  <main>
-    <section class="panel controls">
-      <div class="control-group">
-        <label>选择图片</label>
-        <div class="file-action-row">
-          <input id="fileInput" type="file" accept="image/*" />
-          <button id="clearBtn" class="danger">清空</button>
-        </div>
-        <div class="hint">建议先用较小宽度生成，例如 40～80 颗豆，确认效果后再加大。</div>
+    <input id="fileInput" class="hidden-file-input" type="file" accept="image/*" />
+
+    <div id="myPatternsPage" class="app-page my-patterns-page">
+      <div class="page-topbar">
+        <button id="myPatternsBackBtn" class="secondary back-btn">←</button>
+        <div class="page-title">我的图纸</div>
+      </div>
+      <main class="my-patterns-main">
+        <section class="panel empty-card">
+          <div class="empty-icon">📁</div>
+          <div class="empty-title">暂无已保存图纸</div>
+          <div class="hint">当前版本先保留入口，之后可以继续接入本地保存、历史图纸和重新编辑功能。</div>
+        </section>
+      </main>
+    </div>
+
+    <div id="appPage" class="app-page app-work-page">
+      <div class="app-nav">
+        <button id="backHomeFromAppBtn" class="secondary">返回首页</button>
+        <button id="backUploadFromAppBtn" class="secondary">重选图片</button>
+        <button id="openExportPageBtn" class="secondary">导出图纸</button>
       </div>
 
-      <div class="control-group">
-        <label>图纸宽度 / 横向豆数</label>
-        <div class="row">
-          <input id="beadWidth" type="range" min="8" max="160" value="80" />
-          <div id="beadWidthValue" class="value">80</div>
-        </div>
-        <div class="hint">高度会按原图比例自动计算。豆数越大，细节越多，但实际拼装也越费豆。</div>
-      </div>
-
-      <div class="control-group">
-        <label>拼豆规格</label>
-        <select id="beadSizePreset">
-          <option value="5">常规 5mm 拼豆</option>
-          <option value="2.6">迷你 2.6mm 拼豆</option>
-          <option value="10">大号 10mm 拼豆</option>
-          <option value="custom">自定义直径</option>
-        </select>
-        <div id="customBeadSizeBox" style="display:none; margin-top:10px;">
-          <label>单颗拼豆直径，单位 mm</label>
-          <input id="customBeadSize" type="number" min="1" max="20" step="0.1" value="5" />
-        </div>
-      </div>
-
-      <div class="control-group">
-        <label>颜色模式</label>
-        <select id="paletteMode">
-          <option value="custom" selected>自动压缩为指定色数</option>
-          <option value="free">自由颜色，不限制色板</option>
-          <option value="bw2">黑白 2 色</option>
-          <option value="grayscale8">灰阶 8 色</option>
-          <option value="websafe">Web Safe 216 色</option>
-        </select>
-        <div class="hint">默认会按你设置的色数从图片中自动提取主色，让图纸更干净；“自由颜色”会尽量保留更多原始像素色。</div>
-      </div>
-
-      <div class="control-group" id="customColorGroup">
-        <label>自动压缩色数</label>
-        <div class="row">
-          <input id="customColors" type="range" min="2" max="64" value="24" />
-          <div id="customColorsValue" class="value">24</div>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <label>白色背景不放豆</label>
-        <label class="check-row">
-          <input id="removeWhiteBg" type="checkbox" />
-          <span>生成图纸后，只清理与图纸最外圈连通的白色豆</span>
-        </label>
-        <div class="hint">不会参与颜色压缩或上色判断；会先按当前颜色模式完整生成图纸，再把边缘连通的白色背景豆设为空豆，主体内部白色不受影响。</div>
-      </div>
-
-      <div class="control-group">
-        <label>抖动 Dithering</label>
-        <select id="ditherMode">
-          <option value="none">关闭，更干净</option>
-          <option value="ordered">开启，细节更丰富但豆色更碎</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label>图纸显示</label>
-        <div class="row-2">
-          <select id="renderMode">
-            <option value="beads">圆珠图纸</option>
-            <option value="squares" selected>方格图纸</option>
-          </select>
-          <select id="labelMode">
-            <option value="number">颜色编号</option>
-            <option value="symbol">符号标记</option>
-            <option value="none">不显示文字</option>
-          </select>
-        </div>
-        <label class="check-row"><input id="showGrid" type="checkbox" checked /> <span>显示网格线</span></label>
-        <label class="check-row"><input id="showCoords" type="checkbox" checked /> <span>每 5 格显示坐标辅助线</span></label>
-      </div>
-
-      <div id="toneControlGroup" class="control-group">
-        <label class="tone-desktop-title">调色</label>
-        <button id="toneToggleBtn" class="tone-toggle-btn secondary" type="button" aria-expanded="false">
-          <span>调色</span>
-          <span id="toneToggleState">展开 ▼</span>
-        </button>
-        <div id="toneFields" class="tone-fields">
-          <label>亮度</label>
-          <div class="row"><input id="brightnessRange" type="range" min="-100" max="100" value="0" /><div id="brightnessValue" class="value">0</div></div>
-          <label style="margin-top:10px;">对比度</label>
-          <div class="row"><input id="contrastRange" type="range" min="-100" max="100" value="0" /><div id="contrastValue" class="value">0</div></div>
-          <label style="margin-top:10px;">饱和度</label>
-          <div class="row"><input id="saturationRange" type="range" min="-100" max="100" value="0" /><div id="saturationValue" class="value">0</div></div>
-          <label style="margin-top:10px;">色温</label>
-          <div class="row"><input id="temperatureRange" type="range" min="-100" max="100" value="0" /><div id="temperatureValue" class="value">0</div></div>
-          <div class="btn-grid"><button id="resetToneBtn" class="secondary">重置调色</button></div>
-        </div>
-      </div>
-
-    </section>
-
-    <section class="panel workspace">
+      <main>
+        <section class="panel workspace">
       <div class="stats">
         <div class="stat"><div id="statSize" class="num">-</div><div class="name">图纸尺寸</div></div>
         <div class="stat"><div id="statColors" class="num">-</div><div class="name">颜色数量</div></div>
         <div class="stat"><div id="statBeads" class="num">-</div><div class="name">总豆数</div></div>
-        <div class="stat"><div id="statRealSize" class="num">-</div><div class="name">实际尺寸</div></div>
       </div>
 
       <div class="tabs">
         <button id="tabPreview" class="tab-btn active">图纸预览</button>
         <button id="tabEditor" class="tab-btn">图纸编辑</button>
-        <button id="tabData" class="tab-btn">图纸导出</button>
       </div>
 
       <section id="previewSection" class="tab-section active">
@@ -968,7 +1436,109 @@
         </div>
       </section>
 
-      <section id="dataSection" class="tab-section">
+    </section>
+
+        <section class="panel controls">
+<div class="control-group">
+        <label>图纸宽度 / 横向豆数</label>
+        <div class="row">
+          <input id="beadWidth" type="range" min="8" max="160" value="80" />
+          <div id="beadWidthValue" class="value">80</div>
+        </div>
+        <div class="hint">高度会按原图比例自动计算。豆数越大，细节越多，但实际拼装也越费豆。</div>
+      </div>
+
+      <div class="control-group">
+        <label>颜色模式</label>
+        <select id="paletteMode">
+          <option value="custom" selected>自动压缩为指定色数</option>
+          <option value="free">自由颜色，不限制色板</option>
+          <option value="bw2">黑白 2 色</option>
+          <option value="grayscale8">灰阶 8 色</option>
+          <option value="websafe">Web Safe 216 色</option>
+        </select>
+        <div class="hint">默认会按你设置的色数从图片中自动提取主色，让图纸更干净；“自由颜色”会尽量保留更多原始像素色。</div>
+      </div>
+
+      <div class="control-group" id="customColorGroup">
+        <label>自动压缩色数</label>
+        <div class="row">
+          <input id="customColors" type="range" min="2" max="64" value="24" />
+          <div id="customColorsValue" class="value">24</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>白色背景不放豆</label>
+        <label class="check-row">
+          <input id="removeWhiteBg" type="checkbox" />
+          <span>生成图纸后，只清理与图纸最外圈连通的白色豆</span>
+        </label>
+        <div class="hint">不会参与颜色压缩或上色判断；会先按当前颜色模式完整生成图纸，再把边缘连通的白色背景豆设为空豆，主体内部白色不受影响。</div>
+      </div>
+
+      <div class="control-group">
+        <label>抖动 Dithering</label>
+        <select id="ditherMode">
+          <option value="none">关闭，更干净</option>
+          <option value="ordered">开启，细节更丰富但豆色更碎</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>图纸显示</label>
+        <div class="row-2">
+          <select id="renderMode">
+            <option value="beads">圆珠图纸</option>
+            <option value="squares" selected>方格图纸</option>
+          </select>
+          <select id="labelMode">
+            <option value="number">颜色编号</option>
+            <option value="symbol">符号标记</option>
+            <option value="none">不显示文字</option>
+          </select>
+        </div>
+        <div class="grid-line-row">
+          <label class="check-row"><input id="showGrid" type="checkbox" checked /> <span>显示网格线</span></label>
+          <div id="gridLineColorOptions" class="grid-line-options">
+            <label class="check-row"><input id="gridLineBlack" type="checkbox" checked /> <span>黑线</span></label>
+            <label class="check-row"><input id="gridLineWhite" type="checkbox" /> <span>白线</span></label>
+          </div>
+        </div>
+        <label class="check-row"><input id="showCoords" type="checkbox" checked /> <span>每 5 格显示坐标辅助线</span></label>
+      </div>
+
+      <div id="toneControlGroup" class="control-group">
+        <label class="tone-desktop-title">调色</label>
+        <button id="toneToggleBtn" class="tone-toggle-btn secondary" type="button" aria-expanded="false">
+          <span>调色</span>
+          <span id="toneToggleState">展开 ▼</span>
+        </button>
+        <div id="toneFields" class="tone-fields">
+          <label>亮度</label>
+          <div class="row"><input id="brightnessRange" type="range" min="-100" max="100" value="0" /><div id="brightnessValue" class="value">0</div></div>
+          <label style="margin-top:10px;">对比度</label>
+          <div class="row"><input id="contrastRange" type="range" min="-100" max="100" value="0" /><div id="contrastValue" class="value">0</div></div>
+          <label style="margin-top:10px;">饱和度</label>
+          <div class="row"><input id="saturationRange" type="range" min="-100" max="100" value="0" /><div id="saturationValue" class="value">0</div></div>
+          <label style="margin-top:10px;">色温</label>
+          <div class="row"><input id="temperatureRange" type="range" min="-100" max="100" value="0" /><div id="temperatureValue" class="value">0</div></div>
+          <div class="btn-grid"><button id="resetToneBtn" class="secondary">重置调色</button></div>
+        </div>
+      </div>
+
+    </section>
+      </main>
+    </div>
+
+    <div id="exportPage" class="app-page export-work-page">
+      <div class="page-topbar export-topbar">
+        <button id="backToAppFromExportBtn" class="secondary back-btn">←</button>
+        <div class="page-title">导出图纸</div>
+        <button id="backHomeFromExportBtn" class="secondary export-home-btn">首页</button>
+      </div>
+      <main class="export-page-main">
+      <section id="dataSection" class="tab-section active export-page-section">
         <div class="export-layout">
           <div class="canvas-card">
             <div class="canvas-title"><span>图纸导出预览</span><span id="exportPreviewInfo">等待生成</span></div>
@@ -1001,8 +1571,10 @@
           </div>
         </div>
       </section>
-    </section>
-  </main>
+
+      </main>
+    </div>
+  </div>
 
   <div id="toast" class="toast">完成</div>
 
@@ -1037,6 +1609,7 @@
     let editorZoom = 16;
     let previewZoom = 1;
     let initialPreviewZoom = 1;
+    let previewRedrawTimer = 0;
     let exportPreviewZoom = 1;
     let useBeadColorCodes = true;
     let beadColorCodeCache = new Map();
@@ -1065,6 +1638,9 @@
     const MAX_PREVIEW_ZOOM = 8;
     const MIN_EXPORT_ZOOM = 0.03;
     const MAX_EXPORT_ZOOM = 8;
+    const MAX_PREVIEW_BACKING_PIXELS = 12000000;
+    const MAX_EDITOR_BACKING_PIXELS = 10000000;
+    const MAX_CANVAS_OUTPUT_SCALE = 4;
     const SYMBOLS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789△○□◇☆✚✦♢♣♠♥●▲■◆".split("");
     const EXPORT_SITE_LABEL = "https://hc592.github.io/perler_bead_pattern_tool/";
     const ALPHA_THRESHOLD = 10;
@@ -1104,6 +1680,21 @@
     }
 
     function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    function getDevicePixelScale() {
+      return clamp(window.devicePixelRatio || 1, 1, 2);
+    }
+    function getCanvasOutputScale(baseW, baseH, displayZoom = 1, maxPixels = MAX_PREVIEW_BACKING_PIXELS) {
+      const basePixels = Math.max(1, baseW * baseH);
+      const desired = Math.max(0.25, displayZoom * getDevicePixelScale());
+      const maxByPixels = Math.sqrt(Math.max(1, maxPixels) / basePixels);
+      return clamp(Math.min(desired, maxByPixels), 0.25, MAX_CANVAS_OUTPUT_SCALE);
+    }
+    function getCanvasBaseWidth(canvas) {
+      return Math.max(1, parseFloat(canvas.dataset.baseWidth || '') || (canvas.width / Math.max(0.001, parseFloat(canvas.dataset.outputScale || '1'))) || canvas.width || 1);
+    }
+    function getCanvasBaseHeight(canvas) {
+      return Math.max(1, parseFloat(canvas.dataset.baseHeight || '') || (canvas.height / Math.max(0.001, parseFloat(canvas.dataset.outputScale || '1'))) || canvas.height || 1);
+    }
     function hexToRgb(hex) {
       const n = parseInt(hex.slice(1), 16);
       return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -1191,9 +1782,8 @@
     }
     function signedText(v) { return (v > 0 ? "+" : "") + v; }
     function getBeadDiameterMm() {
-      const preset = $("beadSizePreset").value;
-      if (preset === "custom") return clamp(parseFloat($("customBeadSize").value) || 5, 1, 20);
-      return parseFloat(preset);
+      // 界面已删除“拼豆规格”，内部默认按常规 5mm 计算导出元数据。
+      return 5;
     }
     function formatMm(mm) {
       if (mm >= 1000) return (mm / 1000).toFixed(2) + "m";
@@ -1448,6 +2038,16 @@
       return getMaterialCounts(patternData).reduce((sum, n, i) => i === 0 ? sum : sum + n, 0);
     }
 
+    function getGridLineColor() {
+      const white = $("gridLineWhite") && $("gridLineWhite").checked;
+      return white ? "rgba(255,255,255,.82)" : "rgba(42,62,82,.26)";
+    }
+    function updateGridLineOptionsUI() {
+      const box = $("gridLineColorOptions");
+      const show = $("showGrid");
+      if (box && show) box.style.display = show.checked ? "flex" : "none";
+    }
+
     function getPatternRenderOptions(forExport = false) {
       const maxDim = Math.max(lastPatternData ? lastPatternData.width : 1, lastPatternData ? lastPatternData.height : 1);
       let cell = forExport ? 52 : clamp(Math.floor(900 / maxDim), 8, 28);
@@ -1459,6 +2059,7 @@
         labelMode: $("labelMode").value,
         showGrid: $("showGrid").checked,
         showCoords: $("showCoords").checked,
+        gridLineColor: getGridLineColor(),
         suppressTextLabels: false
       };
     }
@@ -1483,12 +2084,18 @@
     function drawPatternToCanvas(canvas, ctx, patternData, options) {
       const { width, height, palette, pixels } = patternData;
       const { cell, margin, renderMode, labelMode, showGrid, showCoords } = options;
+      const outputScale = Math.max(0.05, Number(options.outputScale || 1));
       const w = width * cell + margin * 2;
       const h = height * cell + margin * 2;
-      canvas.width = w;
-      canvas.height = h;
+      canvas.dataset.baseWidth = String(w);
+      canvas.dataset.baseHeight = String(h);
+      canvas.dataset.outputScale = String(outputScale);
+      canvas.width = Math.max(1, Math.round(w * outputScale));
+      canvas.height = Math.max(1, Math.round(h * outputScale));
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.imageSmoothingEnabled = false;
-      ctx.clearRect(0, 0, w, h);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
       if (!options.transparentBackground) {
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, w, h);
@@ -1515,7 +2122,7 @@
           }
           if (renderMode === "squares") {
             ctx.fillStyle = color;
-            ctx.fillRect(px + 1, py + 1, cell - 2, cell - 2);
+            ctx.fillRect(px, py, cell, cell);
           } else {
             const cx = px + cell / 2;
             const cy = py + cell / 2;
@@ -1543,7 +2150,7 @@
       }
 
       if (showGrid) {
-        ctx.strokeStyle = "rgba(42,62,82,.22)";
+        ctx.strokeStyle = options.gridLineColor || "rgba(42,62,82,.22)";
         ctx.lineWidth = 1;
         ctx.beginPath();
         for (let x = 0; x <= width; x++) {
@@ -1567,6 +2174,7 @@
         ctx.textAlign = "right";
         for (let y = 0; y < height; y += 5) ctx.fillText(String(y + 1), margin - 8, margin + y * cell + cell / 2);
       }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
     function updatePatternInfo() {
       if (!lastPatternData) return;
@@ -1577,8 +2185,10 @@
     function applyPreviewZoom() {
       const zoom = clamp(previewZoom, MIN_PREVIEW_ZOOM, MAX_PREVIEW_ZOOM);
       previewZoom = zoom;
-      patternCanvas.style.width = `${Math.max(1, patternCanvas.width * zoom)}px`;
-      patternCanvas.style.height = `${Math.max(1, patternCanvas.height * zoom)}px`;
+      const baseW = getCanvasBaseWidth(patternCanvas);
+      const baseH = getCanvasBaseHeight(patternCanvas);
+      patternCanvas.style.width = `${Math.max(1, baseW * zoom)}px`;
+      patternCanvas.style.height = `${Math.max(1, baseH * zoom)}px`;
     }
     function getOriginalPreviewDisplaySize() {
       const rect = originalCanvas.getBoundingClientRect();
@@ -1588,28 +2198,53 @@
       };
     }
     function fitPreviewZoomToOriginalSize() {
-      if (!lastPatternData || !sourceImage || !patternCanvas.width || !patternCanvas.height) return;
+      if (!lastPatternData || !sourceImage) return;
       const originalSize = getOriginalPreviewDisplaySize();
-      // 用整张图纸 canvas 的实际尺寸来计算默认缩放，包括坐标边距和网格边距。
-      // 这样初始显示不会因为 margin 或 25% 最小缩放限制而比原图预览更大。
+      const renderOptions = getPatternRenderOptions(false);
+      const gridW = Math.max(1, lastPatternData.width * renderOptions.cell);
+      const gridH = Math.max(1, lastPatternData.height * renderOptions.cell);
+
+      // 只用真正的豆格区域计算默认缩放，不把坐标边距算进来。
+      // 这样“拼豆图纸预览”的图案大小和原图预览保持一致比例。
       previewZoom = clamp(
-        Math.min(originalSize.width / patternCanvas.width, originalSize.height / patternCanvas.height),
+        Math.min(originalSize.width / gridW, originalSize.height / gridH),
         MIN_PREVIEW_ZOOM,
         MAX_PREVIEW_ZOOM
       );
       initialPreviewZoom = previewZoom;
       drawPreviewPattern();
       requestAnimationFrame(() => {
-        patternWrap.scrollLeft = 0;
-        patternWrap.scrollTop = 0;
+        const margin = (getPatternRenderOptions(false).margin || 0) * previewZoom;
+        const gridDisplayW = gridW * previewZoom;
+        const gridDisplayH = gridH * previewZoom;
+        const targetLeft = patternCanvas.offsetLeft + margin - Math.max(0, (patternWrap.clientWidth - gridDisplayW) / 2);
+        const targetTop = patternCanvas.offsetTop + margin - Math.max(0, (patternWrap.clientHeight - gridDisplayH) / 2);
+        patternWrap.scrollLeft = Math.max(0, targetLeft);
+        patternWrap.scrollTop = Math.max(0, targetTop);
       });
       updatePatternInfo();
     }
     function drawPreviewPattern() {
       if (!lastPatternData) return;
-      drawPatternToCanvas(patternCanvas, patternCtx, lastPatternData, getPreviewRenderOptions());
+      const options = getPreviewRenderOptions();
+      const baseW = lastPatternData.width * options.cell + options.margin * 2;
+      const baseH = lastPatternData.height * options.cell + options.margin * 2;
+      options.outputScale = getCanvasOutputScale(baseW, baseH, previewZoom, MAX_PREVIEW_BACKING_PIXELS);
+      drawPatternToCanvas(patternCanvas, patternCtx, lastPatternData, options);
       applyPreviewZoom();
       updatePatternInfo();
+    }
+    function schedulePreviewRedraw(anchor = null, delay = 90) {
+      clearTimeout(previewRedrawTimer);
+      previewRedrawTimer = setTimeout(() => {
+        drawPreviewPattern();
+        if (anchor) {
+          requestAnimationFrame(() => {
+            patternWrap.scrollLeft = Math.max(0, patternCanvas.offsetLeft + anchor.xInCanvas * previewZoom - anchor.xInWrap);
+            patternWrap.scrollTop = Math.max(0, patternCanvas.offsetTop + anchor.yInCanvas * previewZoom - anchor.yInWrap);
+          });
+        }
+      }, delay);
     }
     function setPreviewZoom(value, evt = null) {
       if (!lastPatternData) return;
@@ -1618,7 +2253,14 @@
       if (Math.abs(newZoom - oldZoom) < 0.001) return;
 
       let anchor = null;
-      if (evt) {
+      if (evt && evt.zoomAnchor) {
+        anchor = {
+          xInCanvas: evt.zoomAnchor.xInContent,
+          yInCanvas: evt.zoomAnchor.yInContent,
+          xInWrap: evt.zoomAnchor.xInWrap,
+          yInWrap: evt.zoomAnchor.yInWrap
+        };
+      } else if (evt) {
         const rect = patternCanvas.getBoundingClientRect();
         const wrapRect = patternWrap.getBoundingClientRect();
         anchor = {
@@ -1630,7 +2272,7 @@
       }
 
       previewZoom = newZoom;
-      drawPreviewPattern();
+      applyPreviewZoom();
       if (anchor) {
         requestAnimationFrame(() => {
           patternWrap.scrollLeft = Math.max(0, patternCanvas.offsetLeft + anchor.xInCanvas * newZoom - anchor.xInWrap);
@@ -1638,6 +2280,7 @@
         });
       }
       updatePatternInfo();
+      schedulePreviewRedraw(anchor);
     }
     function drawOriginalImage(img) {
       const max = 720;
@@ -1676,12 +2319,20 @@
         return;
       }
       const opt = getEditorRenderOptions();
+      const outputScale = Math.max(0.05, parseFloat(editorCanvas.dataset.outputScale || "1") || 1);
+      const baseW = getCanvasBaseWidth(editorCanvas);
+      const baseH = getCanvasBaseHeight(editorCanvas);
+      editorReferenceCanvas.dataset.baseWidth = String(baseW);
+      editorReferenceCanvas.dataset.baseHeight = String(baseH);
+      editorReferenceCanvas.dataset.outputScale = String(outputScale);
       editorReferenceCanvas.width = editorCanvas.width;
       editorReferenceCanvas.height = editorCanvas.height;
+      editorReferenceCtx.setTransform(1, 0, 0, 1, 0, 0);
       editorReferenceCtx.clearRect(0, 0, editorReferenceCanvas.width, editorReferenceCanvas.height);
-      editorReferenceCtx.fillStyle = "#ffffff";
-      editorReferenceCtx.fillRect(0, 0, editorReferenceCanvas.width, editorReferenceCanvas.height);
       editorReferenceCtx.imageSmoothingEnabled = true;
+      editorReferenceCtx.setTransform(outputScale, 0, 0, outputScale, 0, 0);
+      editorReferenceCtx.fillStyle = "#ffffff";
+      editorReferenceCtx.fillRect(0, 0, baseW, baseH);
       editorReferenceCtx.drawImage(
         sourceImage,
         opt.margin,
@@ -1692,8 +2343,9 @@
       editorReferenceCtx.strokeStyle = "rgba(88, 123, 157, .28)";
       editorReferenceCtx.lineWidth = 1;
       editorReferenceCtx.strokeRect(opt.margin + 0.5, opt.margin + 0.5, lastPatternData.width * opt.cell - 1, lastPatternData.height * opt.cell - 1);
-      editorReferenceCanvas.style.width = `${editorReferenceCanvas.width}px`;
-      editorReferenceCanvas.style.height = `${editorReferenceCanvas.height}px`;
+      editorReferenceCtx.setTransform(1, 0, 0, 1, 0, 0);
+      editorReferenceCanvas.style.width = `${baseW}px`;
+      editorReferenceCanvas.style.height = `${baseH}px`;
     }
 
     function updateEditorReferenceLayer() {
@@ -1775,6 +2427,7 @@
       selectedSeed = null;
       previewZoom = 1;
       initialPreviewZoom = 1;
+      clearTimeout(previewRedrawTimer);
       exportPreviewZoom = 1;
       useBeadColorCodes = true;
       beadColorCodeCache.clear();
@@ -1801,7 +2454,8 @@
         renderMode: $("renderMode").value,
         labelMode: $("labelMode").value,
         showGrid: $("showGrid").checked,
-        showCoords: $("showCoords").checked
+        showCoords: $("showCoords").checked,
+        gridLineColor: getGridLineColor()
       };
     }
 
@@ -1828,23 +2482,28 @@
       const centerRatioY = (wrap.scrollTop + wrap.clientHeight / 2) / oldH;
 
       const opt = getEditorRenderOptions();
+      const editorBaseW = lastPatternData.width * opt.cell + opt.margin * 2;
+      const editorBaseH = lastPatternData.height * opt.cell + opt.margin * 2;
+      opt.outputScale = getCanvasOutputScale(editorBaseW, editorBaseH, 1, MAX_EDITOR_BACKING_PIXELS);
       opt.transparentBackground = showOriginalBase && !isOriginalCompareActive;
       drawPatternToCanvas(editorCanvas, editorCtx, lastPatternData, opt);
 
-      // 编辑区现在直接使用和“图纸预览”相同的渲染逻辑：
-      // 圆珠/方格、编号/符号、网格线、每 5 格坐标辅助线都会同步跟随。
-      editorCanvas.style.width = `${editorCanvas.width}px`;
-      editorCanvas.style.height = `${editorCanvas.height}px`;
+      // 编辑区保持视觉上的真实缩放，但底层画布会按设备性能自动限制像素尺寸，
+      // 避免 100+ 豆大图放大时生成超大 canvas 导致卡顿。
+      const editorDisplayW = getCanvasBaseWidth(editorCanvas);
+      const editorDisplayH = getCanvasBaseHeight(editorCanvas);
+      editorCanvas.style.width = `${editorDisplayW}px`;
+      editorCanvas.style.height = `${editorDisplayH}px`;
       editorCanvas.style.background = showOriginalBase ? "transparent" : "#fff";
-      editorStage.style.width = `${editorCanvas.width}px`;
-      editorStage.style.height = `${editorCanvas.height}px`;
-      editorOverlay.style.width = `${editorCanvas.width}px`;
-      editorOverlay.style.height = `${editorCanvas.height}px`;
+      editorStage.style.width = `${editorDisplayW}px`;
+      editorStage.style.height = `${editorDisplayH}px`;
+      editorOverlay.style.width = `${editorDisplayW}px`;
+      editorOverlay.style.height = `${editorDisplayH}px`;
       editorOverlay.style.opacity = "0";
       editorOverlay.style.backgroundImage = "none";
       drawEditorReferenceCanvas();
-      editorReferenceCanvas.style.width = `${editorCanvas.width}px`;
-      editorReferenceCanvas.style.height = `${editorCanvas.height}px`;
+      editorReferenceCanvas.style.width = `${editorDisplayW}px`;
+      editorReferenceCanvas.style.height = `${editorDisplayH}px`;
       updateEditorReferenceLayer();
 
       requestAnimationFrame(() => {
@@ -2145,8 +2804,12 @@
       if (!svg) { updateExportZoomLabel(); return; }
       const { w, h } = getExportSvgSize();
       exportPreviewZoom = clamp(exportPreviewZoom, MIN_EXPORT_ZOOM, MAX_EXPORT_ZOOM);
-      svg.style.width = `${Math.max(1, w * exportPreviewZoom)}px`;
-      svg.style.height = `${Math.max(1, h * exportPreviewZoom)}px`;
+      svg.style.width = `${Math.max(1, w)}px`;
+      svg.style.height = `${Math.max(1, h)}px`;
+      svg.style.transformOrigin = "top left";
+      svg.style.transform = `scale(${exportPreviewZoom})`;
+      exportSvgMount.style.width = `${Math.max(1, w * exportPreviewZoom)}px`;
+      exportSvgMount.style.height = `${Math.max(1, h * exportPreviewZoom)}px`;
       updateExportZoomLabel();
     }
     function fitExportPreviewZoom() {
@@ -2169,7 +2832,14 @@
 
       let anchor = null;
       const svg = exportSvgMount ? exportSvgMount.querySelector("svg") : null;
-      if (evt && svg && exportPreviewWrap) {
+      if (evt && evt.zoomAnchor) {
+        anchor = {
+          xInSvg: evt.zoomAnchor.xInContent,
+          yInSvg: evt.zoomAnchor.yInContent,
+          xInWrap: evt.zoomAnchor.xInWrap,
+          yInWrap: evt.zoomAnchor.yInWrap
+        };
+      } else if (evt && svg && exportPreviewWrap) {
         const rect = svg.getBoundingClientRect();
         const wrapRect = exportPreviewWrap.getBoundingClientRect();
         anchor = {
@@ -2196,6 +2866,7 @@
       if (svg) {
         svg.setAttribute("aria-label", "导出图纸预览");
         svg.style.transformOrigin = "top left";
+        svg.style.shapeRendering = "crispEdges";
       }
       const { w, h } = getExportSvgSize();
       const total = countTotalBeads();
@@ -2220,11 +2891,9 @@
       if (!lastPatternData) return;
       const total = countTotalBeads();
       const entries = getUsedPaletteEntries();
-      const beadMm = lastPatternData.meta?.beadDiameterMm || getBeadDiameterMm();
       $("statSize").textContent = `${lastPatternData.width}×${lastPatternData.height}`;
       $("statColors").textContent = entries.length;
       $("statBeads").textContent = total;
-      $("statRealSize").textContent = `${formatMm(lastPatternData.width * beadMm)} × ${formatMm(lastPatternData.height * beadMm)}`;
       updatePatternInfo();
     }
     function refreshAllViews() {
@@ -2239,7 +2908,7 @@
       updateUndoRedoButtons();
     }
     function setButtonsEnabled(enabled) {
-      ["openEditorBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "mirrorPatternBtn", "toggleBeadCodeBtn", "exportFitBtn", "exportActualBtn", "exportZoomOutBtn", "exportZoomInBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "zoomInBtn", "zoomOutBtn", "autoFitZoomBtn", "applyOutlineBtn"].forEach(id => {
+      ["openEditorBtn", "openExportPageBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "mirrorPatternBtn", "toggleBeadCodeBtn", "exportFitBtn", "exportActualBtn", "exportZoomOutBtn", "exportZoomInBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "zoomInBtn", "zoomOutBtn", "autoFitZoomBtn", "applyOutlineBtn"].forEach(id => {
         const el = $(id); if (el) el.disabled = !enabled;
       });
       updateUndoRedoButtons();
@@ -2251,8 +2920,9 @@
       const opt = getEditorRenderOptions();
       const scaleX = editorCanvas.width / Math.max(1, rect.width);
       const scaleY = editorCanvas.height / Math.max(1, rect.height);
-      const canvasX = (evt.clientX - rect.left) * scaleX;
-      const canvasY = (evt.clientY - rect.top) * scaleY;
+      const outputScale = Math.max(0.05, parseFloat(editorCanvas.dataset.outputScale || "1") || 1);
+      const canvasX = (evt.clientX - rect.left) * scaleX / outputScale;
+      const canvasY = (evt.clientY - rect.top) * scaleY / outputScale;
       const x = Math.floor((canvasX - opt.margin) / opt.cell);
       const y = Math.floor((canvasY - opt.margin) / opt.cell);
       if (x < 0 || y < 0 || x >= lastPatternData.width || y >= lastPatternData.height) return null;
@@ -2532,7 +3202,7 @@
         const px = opt.margin + x * opt.cell;
         const py = opt.margin + y * opt.cell;
         if (!index || !color || color === "transparent") continue;
-        if (opt.renderMode === "squares") lines.push(`<rect x="${px + 1}" y="${py + 1}" width="${opt.cell - 2}" height="${opt.cell - 2}" fill="${escapeSvgAttr(color)}"/>`);
+        if (opt.renderMode === "squares") lines.push(`<rect x="${px}" y="${py}" width="${opt.cell}" height="${opt.cell}" fill="${escapeSvgAttr(color)}"/>`);
         else lines.push(`<circle cx="${px + opt.cell / 2}" cy="${py + opt.cell / 2}" r="${opt.cell * .42}" fill="${escapeSvgAttr(color)}" stroke="rgba(0,0,0,.16)" stroke-width="1"/>`);
         if (opt.labelMode !== "none" && opt.cell >= 12) {
           const text = opt.labelMode === "symbol" ? (SYMBOLS[(index - 1) % SYMBOLS.length] || String(index)) : String(index);
@@ -2541,8 +3211,9 @@
         }
       };
       if (opt.showGrid) {
-        for (let x = 0; x <= width; x++) lines.push(`<line x1="${opt.margin + x * opt.cell}" y1="${opt.margin}" x2="${opt.margin + x * opt.cell}" y2="${opt.margin + height * opt.cell}" stroke="rgba(42,62,82,.22)" stroke-width="1"/>`);
-        for (let y = 0; y <= height; y++) lines.push(`<line x1="${opt.margin}" y1="${opt.margin + y * opt.cell}" x2="${opt.margin + width * opt.cell}" y2="${opt.margin + y * opt.cell}" stroke="rgba(42,62,82,.22)" stroke-width="1"/>`);
+        const gridStroke = escapeSvgAttr(opt.gridLineColor || "rgba(42,62,82,.22)");
+        for (let x = 0; x <= width; x++) lines.push(`<line x1="${opt.margin + x * opt.cell}" y1="${opt.margin}" x2="${opt.margin + x * opt.cell}" y2="${opt.margin + height * opt.cell}" stroke="${gridStroke}" stroke-width="1"/>`);
+        for (let y = 0; y <= height; y++) lines.push(`<line x1="${opt.margin}" y1="${opt.margin + y * opt.cell}" x2="${opt.margin + width * opt.cell}" y2="${opt.margin + y * opt.cell}" stroke="${gridStroke}" stroke-width="1"/>`);
       }
       if (opt.showCoords) {
         lines.push(`<g font-family="Arial, Microsoft YaHei, sans-serif" font-size="11" fill="#61758a">`);
@@ -2613,12 +3284,13 @@
       editorCanvas.style.background = "#fff";
       editorOverlay.style.visibility = "visible";
       $("originalInfo").textContent = "未选择图片"; $("patternInfo").textContent = "等待生成"; $("editorInfo").textContent = "尚未进入编辑模式";
-      $("statSize").textContent = "-"; $("statColors").textContent = "-"; $("statBeads").textContent = "-"; $("statRealSize").textContent = "-";
+      $("statSize").textContent = "-"; $("statColors").textContent = "-"; $("statBeads").textContent = "-";
       const paletteBox = $("paletteBox"); if (paletteBox) paletteBox.innerHTML = ""; $("editorPaletteBox").innerHTML = ""; $("materialsTableWrap").innerHTML = ""; clearExportPreview();
-      setButtonsEnabled(false); showToast("已清空");
+      setButtonsEnabled(false); setConfirmImageReady(false); showToast("已清空");
     }
     function switchTab(tab) {
-      const map = { preview: ["tabPreview", "previewSection"], editor: ["tabEditor", "editorSection"], data: ["tabData", "dataSection"] };
+      const map = { preview: ["tabPreview", "previewSection"], editor: ["tabEditor", "editorSection"] };
+      if (!map[tab]) tab = "preview";
       Object.values(map).forEach(([btn, section]) => { $(btn).classList.remove("active"); $(section).classList.remove("active"); });
       $(map[tab][0]).classList.add("active"); $(map[tab][1]).classList.add("active");
       if (tab === "editor" && lastPatternData) {
@@ -2634,7 +3306,6 @@
           }
         });
       }
-      if (tab === "data" && lastPatternData) requestAnimationFrame(() => updateExportSection(true));
     }
     function showToast(text, isError = false) {
       const toast = $("toast");
@@ -2672,7 +3343,7 @@
       cleanupPalette(false);
       refreshAllViews();
     }
-    function bindTouchPanAndPinch(wrap, getZoom, setZoom, cursorReset) {
+    function bindTouchPanAndPinch(wrap, getZoom, setZoom, cursorReset, getContentElement) {
       if (!wrap) return;
       let touchMode = "";
       let startX = 0;
@@ -2681,6 +3352,34 @@
       let startScrollTop = 0;
       let pinchStartDistance = 1;
       let pinchStartZoom = 1;
+      let pinchAnchor = null;
+
+      function getPinchAnchor(mid, zoom) {
+        const content = typeof getContentElement === "function" ? getContentElement() : null;
+        if (!content) return null;
+        const rect = content.getBoundingClientRect();
+        const wrapRect = wrap.getBoundingClientRect();
+        return {
+          xInContent: (mid.clientX - rect.left) / Math.max(zoom, 0.001),
+          yInContent: (mid.clientY - rect.top) / Math.max(zoom, 0.001),
+          xInWrap: mid.clientX - wrapRect.left,
+          yInWrap: mid.clientY - wrapRect.top
+        };
+      }
+
+      function makeZoomEventFromPinch(mid) {
+        const zoomEvt = makeClientEvent(mid);
+        if (pinchAnchor) {
+          const wrapRect = wrap.getBoundingClientRect();
+          zoomEvt.zoomAnchor = {
+            xInContent: pinchAnchor.xInContent,
+            yInContent: pinchAnchor.yInContent,
+            xInWrap: mid.clientX - wrapRect.left,
+            yInWrap: mid.clientY - wrapRect.top
+          };
+        }
+        return zoomEvt;
+      }
 
       wrap.addEventListener("touchstart", evt => {
         if (!lastPatternData) return;
@@ -2691,12 +3390,14 @@
           startY = t.clientY;
           startScrollLeft = wrap.scrollLeft;
           startScrollTop = wrap.scrollTop;
+          pinchAnchor = null;
           wrap.style.cursor = "grabbing";
           safePreventDefault(evt);
         } else if (evt.touches.length >= 2) {
           touchMode = "pinch";
           pinchStartDistance = Math.max(1, touchDistance(evt.touches[0], evt.touches[1]));
           pinchStartZoom = getZoom();
+          pinchAnchor = getPinchAnchor(touchMidpoint(evt.touches[0], evt.touches[1]), pinchStartZoom);
           safePreventDefault(evt);
         }
       }, { passive: false });
@@ -2706,7 +3407,7 @@
         if (touchMode === "pinch" && evt.touches.length >= 2) {
           const nextDistance = Math.max(1, touchDistance(evt.touches[0], evt.touches[1]));
           const mid = touchMidpoint(evt.touches[0], evt.touches[1]);
-          setZoom(pinchStartZoom * (nextDistance / pinchStartDistance), makeClientEvent(mid));
+          setZoom(pinchStartZoom * (nextDistance / pinchStartDistance), makeZoomEventFromPinch(mid));
           safePreventDefault(evt);
           return;
         }
@@ -2721,6 +3422,7 @@
       const endTouch = () => {
         if (!touchMode) return;
         touchMode = "";
+        pinchAnchor = null;
         wrap.style.cursor = cursorReset || "grab";
       };
       wrap.addEventListener("touchend", endTouch, { passive: true });
@@ -2809,11 +3511,56 @@
       wrap.addEventListener("touchcancel", endTouch, { passive: true });
     }
 
+    function showPage(pageId) {
+      ["homePage", "myPatternsPage", "appPage", "exportPage"].forEach(id => {
+        const page = $(id);
+        if (page) page.classList.toggle("active", id === pageId);
+      });
+      const shell = document.querySelector(".mobile-shell");
+      if (shell) shell.scrollTop = 0;
+      if (pageId === "appPage" && lastPatternData) {
+        switchTab("preview");
+        requestAnimationFrame(() => {
+          fitPreviewZoomToOriginalSize();
+        });
+      }
+      if (pageId === "exportPage" && lastPatternData) {
+        requestAnimationFrame(() => updateExportSection(true));
+      }
+    }
+
+    function openImagePicker() {
+      fileInput.value = "";
+      fileInput.click();
+    }
+
+    function setConfirmImageReady() {}
+
+    $("startGenerateBtn").addEventListener("click", openImagePicker);
+    $("myPatternsBtn").addEventListener("click", () => showPage("myPatternsPage"));
+    $("myPatternsBackBtn").addEventListener("click", () => showPage("homePage"));
+    $("backUploadFromAppBtn").addEventListener("click", openImagePicker);
+    $("backHomeFromAppBtn").addEventListener("click", () => showPage("homePage"));
+    $("openExportPageBtn").addEventListener("click", () => {
+      if (!lastPatternData) { showToast("请先生成图纸", true); return; }
+      showPage("exportPage");
+    });
+    $("backToAppFromExportBtn").addEventListener("click", () => showPage("appPage"));
+    $("backHomeFromExportBtn").addEventListener("click", () => showPage("homePage"));
+
     fileInput.addEventListener("change", () => {
       const file = fileInput.files[0];
       if (!file) return;
       const img = new Image();
-      img.onload = () => { sourceImage = img; drawOriginalImage(img); generatePattern(); URL.revokeObjectURL(img.src); };
+      img.onload = () => {
+        sourceImage = img;
+        lastPatternData = null;
+        drawOriginalImage(img);
+        generatePattern();
+        showPage("appPage");
+        showToast("图纸已生成");
+        URL.revokeObjectURL(img.src);
+      };
       img.onerror = () => showToast("图片读取失败", true);
       img.src = URL.createObjectURL(file);
     });
@@ -2823,6 +3570,7 @@
         $("beadWidthValue").textContent = $("beadWidth").value;
         $("customColorsValue").textContent = $("customColors").value;
         updateToneLabels();
+    updateGridLineOptionsUI();
         if (sourceImage) generatePattern();
       });
     });
@@ -2830,12 +3578,18 @@
       if (sourceImage) generatePattern();
       else updateEditableColorSelectors();
     }));
-    ["renderMode", "labelMode", "showGrid", "showCoords"].forEach(id => $(id).addEventListener("change", () => { if (lastPatternData) refreshAllViews(); }));
-    $("beadSizePreset").addEventListener("change", () => {
-      $("customBeadSizeBox").style.display = $("beadSizePreset").value === "custom" ? "block" : "none";
+    ["renderMode", "labelMode", "showGrid", "showCoords"].forEach(id => $(id).addEventListener("change", () => {
+      updateGridLineOptionsUI();
       if (lastPatternData) refreshAllViews();
-    });
-    $("customBeadSize").addEventListener("input", () => { if (lastPatternData) refreshAllViews(); });
+    }));
+    ["gridLineBlack", "gridLineWhite"].forEach(id => $(id).addEventListener("change", () => {
+      const black = $("gridLineBlack");
+      const white = $("gridLineWhite");
+      if (id === "gridLineBlack" && black.checked) white.checked = false;
+      if (id === "gridLineWhite" && white.checked) black.checked = false;
+      if (!black.checked && !white.checked) black.checked = true;
+      if (lastPatternData) refreshAllViews();
+    }));
     $("paletteMode").addEventListener("change", () => { $("customColorGroup").style.display = $("paletteMode").value === "custom" ? "block" : "none"; updateEditableColorSelectors(); });
     function updateToneToggleState() {
       const group = $("toneControlGroup");
@@ -2867,13 +3621,14 @@
     $("downloadCsvBtn").addEventListener("click", downloadCsv);
     $("mirrorPatternBtn").addEventListener("click", mirrorCurrentPattern);
     $("toggleBeadCodeBtn").addEventListener("click", toggleBeadColorCodeMode);
-    $("clearBtn").addEventListener("click", clearAll);
+    const clearBtn = $("clearBtn");
+    if (clearBtn) clearBtn.addEventListener("click", clearAll);
     $("exportFitBtn").addEventListener("click", fitExportPreviewZoom);
     $("exportActualBtn").addEventListener("click", () => setExportPreviewZoom(1));
     $("exportZoomOutBtn").addEventListener("click", () => setExportPreviewZoom(exportPreviewZoom / 1.25));
     $("exportZoomInBtn").addEventListener("click", () => setExportPreviewZoom(exportPreviewZoom * 1.25));
 
-    bindTouchPanAndPinch(exportPreviewWrap, () => exportPreviewZoom, setExportPreviewZoom, "grab");
+    bindTouchPanAndPinch(exportPreviewWrap, () => exportPreviewZoom, setExportPreviewZoom, "grab", () => exportSvgMount && exportSvgMount.querySelector("svg"));
 
     exportPreviewWrap.addEventListener("wheel", evt => {
       if (!lastPatternData) return;
@@ -2906,7 +3661,6 @@
 
     $("tabPreview").addEventListener("click", () => switchTab("preview"));
     $("tabEditor").addEventListener("click", () => switchTab("editor"));
-    $("tabData").addEventListener("click", () => switchTab("data"));
     $("toolPaint").addEventListener("click", () => setTool("paint"));
     $("toolErase").addEventListener("click", () => setTool("erase"));
     $("toolPick").addEventListener("click", () => setTool("pick"));
@@ -2969,7 +3723,7 @@
     $("outlineThickness").addEventListener("input", () => { $("outlineThicknessValue").textContent = $("outlineThickness").value; });
     $("applyOutlineBtn").addEventListener("click", applyOutline);
 
-    bindTouchPanAndPinch(patternWrap, () => previewZoom, setPreviewZoom, "grab");
+    bindTouchPanAndPinch(patternWrap, () => previewZoom, setPreviewZoom, "grab", () => patternCanvas);
 
     patternWrap.addEventListener("wheel", evt => {
       if (!lastPatternData) return;
