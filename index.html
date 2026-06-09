@@ -31,7 +31,7 @@
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
       background:
         radial-gradient(circle at top left, rgba(78,162,245,.18), transparent 34rem),
         radial-gradient(circle at bottom right, rgba(255,192,88,.16), transparent 34rem),
@@ -63,7 +63,7 @@
       min-width: 1.18em;
       min-height: 1.18em;
       padding: .14em .18em;
-      font-family: "Zpix", "Microsoft YaHei", monospace;
+      font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
       font-weight: 400;
       font-size: inherit;
       line-height: 1;
@@ -384,7 +384,7 @@
     .export-actions button { min-height: 46px; }
     .data-area { display: grid; grid-template-columns: 1fr; gap: 16px; }
     @media (max-width: 1000px) { .data-area { grid-template-columns: 1fr; } }
-    textarea { min-height: 270px; resize: vertical; font-family: Consolas, "Courier New", monospace; font-size: 12px; line-height: 1.45; }
+    textarea { min-height: 270px; resize: vertical; font-family: "Microsoft YaHei", "微软雅黑", sans-serif; font-size: 12px; line-height: 1.45; }
     .palette { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; max-height: 180px; overflow: auto; }
     .swatch { width: 34px; height: 34px; border-radius: 999px; border: 1px solid rgba(0,0,0,.16); cursor: pointer; position: relative; box-shadow: inset 0 3px 8px rgba(255,255,255,.45), inset 0 -3px 7px rgba(0,0,0,.12); }
     .swatch.selected { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -461,7 +461,7 @@
       background: #000;
     }
     .color-select-row select { min-width: 0; }
-    .mono { font-family: Consolas, "Courier New", monospace; color: var(--accent); overflow-wrap: anywhere; font-size: 13px; }
+    .mono { font-family: "Microsoft YaHei", "微软雅黑", sans-serif; color: var(--accent); overflow-wrap: anywhere; font-size: 13px; }
     .status-line { color: var(--muted); font-size: 12px; line-height: 1.5; }
     .check-row { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 13px; margin-top: 10px; user-select: none; }
     .tone-toggle-btn {
@@ -481,6 +481,8 @@
       white-space: nowrap;
     }
     .tone-fields { display: block; }
+    .collapsible-control-group .toggle-fields { display: none; padding-top: 10px; }
+    .collapsible-control-group.toggle-open .toggle-fields { display: block; }
     .materials-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .materials-table th, .materials-table td { border-bottom: 1px solid rgba(108,136,166,.18); padding: 9px 7px; text-align: left; }
     .materials-table th { color: var(--muted); font-weight: 700; background: rgba(246,249,252,.75); }
@@ -1263,19 +1265,24 @@
 
     /* 本版：工作界面顶部三按钮、导出独立页面、网格线颜色选择 */
     .app-nav {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      padding-left: 12px;
-      padding-right: 12px;
+      display: flex;
+      grid-template-columns: none;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px 0;
     }
     .app-nav button {
-      min-width: 0;
-      width: 100%;
-      min-height: 40px;
-      padding: 6px 5px;
-      border-radius: 11px;
-      font-size: 13px !important;
-      font-weight: 900;
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 42px;
+      height: 28px;
+      min-height: 28px;
+      padding: 0 9px;
+      border-radius: 8px;
+      font-size: 12px !important;
+      font-weight: 800;
+      line-height: 1;
       white-space: nowrap;
     }
     .export-work-page main,
@@ -1328,8 +1335,8 @@
     }
     @media (max-width: 420px), (max-height: 760px) {
       .mobile-shell .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .app-nav { gap: 8px; }
-      .app-nav button { min-height: 38px; font-size: 12px !important; padding-left: 3px; padding-right: 3px; }
+      .app-nav { gap: 6px; padding-top: 6px; padding-left: 8px; padding-right: 8px; }
+      .app-nav button { min-width: 38px; height: 26px; min-height: 26px; padding-left: 8px; padding-right: 8px; font-size: 11px !important; border-radius: 7px; }
     }
 
 
@@ -1375,6 +1382,759 @@
       }
     }
 
+    /* 预览页内编辑模式 */
+    .pattern-wrap.preview-editing { cursor: crosshair; }
+    .pattern-wrap.preview-editing:active { cursor: crosshair; }
+    #previewEditModeBtn.active {
+      border-color: rgba(78,162,245,.8);
+      background: linear-gradient(180deg, rgba(78,162,245,.28), rgba(78,162,245,.14));
+    }
+
+
+
+    /* 本次调整：顶部只保留左右两个小按钮，统计卡片整体压缩 */
+    .app-nav {
+      display: flex !important;
+      grid-template-columns: none !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      gap: 0 !important;
+      padding: 6px 12px 0 !important;
+    }
+    .app-nav button {
+      flex: 0 0 auto !important;
+      width: auto !important;
+      min-width: 42px !important;
+      height: 26px !important;
+      min-height: 26px !important;
+      padding: 0 9px !important;
+      border-radius: 8px !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+    }
+    .mobile-shell .workspace {
+      gap: 10px !important;
+      padding-top: 10px !important;
+    }
+    .mobile-shell .stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+      height: auto !important;
+      min-height: 0 !important;
+    }
+    .mobile-shell .stat {
+      min-height: 58px !important;
+      padding: 7px 8px !important;
+      border-radius: 12px !important;
+      justify-content: center !important;
+    }
+    .mobile-shell .stat .num {
+      font-size: 20px !important;
+      line-height: 1.05 !important;
+      min-height: 21px !important;
+    }
+    .mobile-shell .stat .name {
+      margin-top: 5px !important;
+      font-size: 11px !important;
+      line-height: 1.1 !important;
+    }
+    @media (max-width: 420px), (max-height: 760px) {
+      .app-nav {
+        padding: 5px 10px 0 !important;
+      }
+      .app-nav button {
+        min-width: 38px !important;
+        height: 24px !important;
+        min-height: 24px !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        font-size: 11px !important;
+        border-radius: 7px !important;
+      }
+      .mobile-shell .stats {
+        gap: 5px !important;
+      }
+      .mobile-shell .stat {
+        min-height: 52px !important;
+        padding: 6px 6px !important;
+        border-radius: 10px !important;
+      }
+      .mobile-shell .stat .num {
+        font-size: 18px !important;
+        min-height: 19px !important;
+      }
+      .mobile-shell .stat .name {
+        margin-top: 4px !important;
+        font-size: 10px !important;
+      }
+    }
+
+
+
+    /* 本次调整：去掉图纸预览外层边框限制，让预览宽度贴满卡牌 */
+    #previewSection .editor-layout {
+      width: 100% !important;
+    }
+    #previewSection .canvas-card {
+      width: 100% !important;
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      gap: 10px !important;
+    }
+    #previewSection #patternWrap {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 0 !important;
+      border-radius: 0 !important;
+      background: #ffffff !important;
+      min-height: 330px !important;
+      max-height: 72vh !important;
+    }
+    #previewSection #patternStage {
+      margin: 0 auto !important;
+    }
+    #previewSection .preview-bottom-toolbar,
+    #previewSection #previewOpacityPanel {
+      padding: 0 !important;
+    }
+    @media (max-width: 420px), (max-height: 760px) {
+      #previewSection #patternWrap {
+        min-height: 300px !important;
+        max-height: 72vh !important;
+      }
+    }
+
+
+    /* 本次调整：左上角返回改为裸箭头，底部预览按钮大幅缩小 */
+    #backHomeFromAppBtn.nav-arrow-only {
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      width: 28px !important;
+      min-width: 28px !important;
+      height: 28px !important;
+      min-height: 28px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      color: var(--text) !important;
+      font-size: 24px !important;
+      font-weight: 700 !important;
+      line-height: 1 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transform: none !important;
+    }
+    #backHomeFromAppBtn.nav-arrow-only:hover,
+    #backHomeFromAppBtn.nav-arrow-only:active,
+    #backHomeFromAppBtn.nav-arrow-only:focus {
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      filter: none !important;
+      transform: none !important;
+      outline: none !important;
+    }
+    #previewSection .preview-bottom-toolbar {
+      grid-template-columns: 34px 34px 74px 74px !important;
+      justify-content: center !important;
+      gap: 7px !important;
+      width: 100% !important;
+      margin-top: 6px !important;
+    }
+    #previewSection .preview-bottom-toolbar button,
+    #previewSection .preview-bottom-toolbar .text-btn,
+    #previewSection .preview-bottom-toolbar .nav-btn {
+      width: 100% !important;
+      min-width: 0 !important;
+      height: 30px !important;
+      min-height: 30px !important;
+      padding: 0 4px !important;
+      border-radius: 9px !important;
+      line-height: 1 !important;
+    }
+    #previewSection .preview-bottom-toolbar .nav-btn {
+      font-size: 16px !important;
+      font-weight: 800 !important;
+    }
+    #previewSection .preview-bottom-toolbar .text-btn {
+      font-size: 12px !important;
+      font-weight: 800 !important;
+      letter-spacing: 0 !important;
+    }
+    @media (max-width: 380px) {
+      #previewSection .preview-bottom-toolbar {
+        grid-template-columns: 32px 32px 68px 68px !important;
+        gap: 6px !important;
+      }
+      #previewSection .preview-bottom-toolbar button,
+      #previewSection .preview-bottom-toolbar .text-btn,
+      #previewSection .preview-bottom-toolbar .nav-btn {
+        height: 28px !important;
+        min-height: 28px !important;
+        border-radius: 8px !important;
+        padding: 0 3px !important;
+      }
+      #previewSection .preview-bottom-toolbar .text-btn {
+        font-size: 11px !important;
+      }
+      #previewSection .preview-bottom-toolbar .nav-btn {
+        font-size: 15px !important;
+      }
+    }
+
+
+    /* 本次调整：统计信息上移到顶部导航同一行，图纸预览贴近卡片顶部 */
+    .app-nav.compact-nav-with-stats {
+      display: grid !important;
+      grid-template-columns: 30px minmax(0, 1fr) 48px !important;
+      align-items: center !important;
+      gap: 6px !important;
+      padding: 5px 10px 0 !important;
+      justify-content: initial !important;
+    }
+    .app-nav.compact-nav-with-stats #openExportPageBtn {
+      width: 48px !important;
+      min-width: 48px !important;
+      height: 28px !important;
+      min-height: 28px !important;
+      padding: 0 !important;
+      border-radius: 9px !important;
+      font-size: 12px !important;
+      font-weight: 900 !important;
+    }
+    .app-nav.compact-nav-with-stats .compact-top-stats {
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 4px !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      height: auto !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+      align-items: stretch !important;
+    }
+    .app-nav.compact-nav-with-stats .compact-top-stats .stat {
+      min-height: 38px !important;
+      height: 38px !important;
+      padding: 3px 5px !important;
+      border-radius: 10px !important;
+      background: rgba(255,255,255,.72) !important;
+      border: 1px solid rgba(108, 136, 166, .16) !important;
+      box-shadow: none !important;
+      justify-content: center !important;
+    }
+    .app-nav.compact-nav-with-stats .compact-top-stats .stat .num {
+      font-size: 15px !important;
+      line-height: 1 !important;
+      min-height: 15px !important;
+      font-weight: 900 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+    .app-nav.compact-nav-with-stats .compact-top-stats .stat .name {
+      margin-top: 3px !important;
+      font-size: 9px !important;
+      line-height: 1 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+    .app-work-page main {
+      padding-top: 4px !important;
+    }
+    .mobile-shell .workspace.preview-workspace-fulltop {
+      padding-top: 6px !important;
+      gap: 0 !important;
+    }
+    .preview-workspace-fulltop #previewSection {
+      margin-top: 0 !important;
+    }
+    .preview-workspace-fulltop #previewSection .canvas-card {
+      margin-top: 0 !important;
+      gap: 8px !important;
+    }
+    .preview-workspace-fulltop #previewSection #patternWrap {
+      margin-top: 0 !important;
+      min-height: 350px !important;
+    }
+    @media (max-width: 420px), (max-height: 760px) {
+      .app-nav.compact-nav-with-stats {
+        grid-template-columns: 28px minmax(0, 1fr) 44px !important;
+        gap: 5px !important;
+        padding: 4px 8px 0 !important;
+      }
+      .app-nav.compact-nav-with-stats #openExportPageBtn {
+        width: 44px !important;
+        min-width: 44px !important;
+        height: 26px !important;
+        min-height: 26px !important;
+        border-radius: 8px !important;
+        font-size: 11px !important;
+      }
+      .app-nav.compact-nav-with-stats .compact-top-stats {
+        gap: 3px !important;
+      }
+      .app-nav.compact-nav-with-stats .compact-top-stats .stat {
+        height: 34px !important;
+        min-height: 34px !important;
+        padding: 2px 4px !important;
+        border-radius: 9px !important;
+      }
+      .app-nav.compact-nav-with-stats .compact-top-stats .stat .num {
+        font-size: 14px !important;
+        min-height: 14px !important;
+      }
+      .app-nav.compact-nav-with-stats .compact-top-stats .stat .name {
+        margin-top: 2px !important;
+        font-size: 8px !important;
+      }
+      .app-work-page main {
+        padding-top: 3px !important;
+      }
+      .mobile-shell .workspace.preview-workspace-fulltop {
+        padding-top: 5px !important;
+      }
+      .preview-workspace-fulltop #previewSection #patternWrap {
+        min-height: 330px !important;
+      }
+    }
+
+
+
+    /* 本次调整：预览页按钮固定在卡片底部左右，原图打底移入图纸显示 */
+    #previewSection .canvas-card {
+      position: relative !important;
+      padding-bottom: 62px !important;
+      min-height: 100% !important;
+    }
+    #previewSection .preview-bottom-toolbar {
+      position: absolute !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 10px !important;
+      width: 100% !important;
+      min-height: 34px !important;
+      margin: 0 !important;
+      padding: 0 8px !important;
+      display: block !important;
+      pointer-events: none !important;
+      z-index: 4 !important;
+    }
+    #previewSection .preview-bottom-toolbar .preview-toolbar-left,
+    #previewSection .preview-bottom-toolbar .preview-toolbar-right {
+      position: absolute !important;
+      bottom: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      pointer-events: auto !important;
+    }
+    #previewSection .preview-bottom-toolbar .preview-toolbar-left {
+      left: 8px !important;
+    }
+    #previewSection .preview-bottom-toolbar .preview-toolbar-right {
+      right: 8px !important;
+    }
+    #previewSection .preview-bottom-toolbar .preview-hidden-base-btn,
+    #previewSection #previewOpacityPanel.preview-opacity-panel-hidden {
+      display: none !important;
+    }
+    #previewSection .preview-bottom-toolbar button,
+    #previewSection .preview-bottom-toolbar .text-btn,
+    #previewSection .preview-bottom-toolbar .nav-btn {
+      width: auto !important;
+      min-width: 0 !important;
+      height: 30px !important;
+      min-height: 30px !important;
+      padding: 0 12px !important;
+      border-radius: 9px !important;
+      line-height: 1 !important;
+      pointer-events: auto !important;
+    }
+    #previewSection .preview-bottom-toolbar .nav-btn {
+      min-width: 36px !important;
+      padding: 0 !important;
+      font-size: 16px !important;
+      font-weight: 800 !important;
+    }
+    #previewSection .preview-bottom-toolbar .text-btn {
+      min-width: 74px !important;
+      font-size: 12px !important;
+      font-weight: 800 !important;
+      letter-spacing: 0 !important;
+      white-space: nowrap !important;
+    }
+    .pattern-opacity-inline {
+      display: none;
+      margin-top: 8px;
+    }
+    .pattern-opacity-inline.show {
+      display: block;
+    }
+    .pattern-opacity-inline .row {
+      margin-top: 2px;
+    }
+    @media (max-width: 380px) {
+      #previewSection .canvas-card {
+        padding-bottom: 58px !important;
+      }
+      #previewSection .preview-bottom-toolbar {
+        bottom: 8px !important;
+        padding: 0 6px !important;
+      }
+      #previewSection .preview-bottom-toolbar .preview-toolbar-left {
+        left: 6px !important;
+        gap: 6px !important;
+      }
+      #previewSection .preview-bottom-toolbar .preview-toolbar-right {
+        right: 6px !important;
+      }
+      #previewSection .preview-bottom-toolbar button,
+      #previewSection .preview-bottom-toolbar .text-btn,
+      #previewSection .preview-bottom-toolbar .nav-btn {
+        height: 28px !important;
+        min-height: 28px !important;
+        border-radius: 8px !important;
+      }
+      #previewSection .preview-bottom-toolbar .nav-btn {
+        min-width: 34px !important;
+        font-size: 15px !important;
+      }
+      #previewSection .preview-bottom-toolbar .text-btn {
+        min-width: 68px !important;
+        padding: 0 10px !important;
+        font-size: 11px !important;
+      }
+    }
+
+
+    /* 本次调整：底部功能改为横向滑动工具栏，点选后上浮显示对应调节区 */
+    .app-work-page.active {
+      min-height: 0 !important;
+      height: 100% !important;
+      overflow: hidden !important;
+    }
+    .app-work-page.active main {
+      flex: 1 1 auto !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 8px !important;
+      padding: 4px 6px 6px !important;
+      overflow: hidden !important;
+    }
+    .app-work-page.active .workspace.preview-workspace-fulltop {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+      padding: 5px 7px 0 !important;
+    }
+    .app-work-page.active #previewSection,
+    .app-work-page.active #previewSection .editor-layout,
+    .app-work-page.active #previewSection .canvas-card {
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+    .app-work-page.active #previewSection .canvas-card {
+      display: flex !important;
+      flex-direction: column !important;
+      padding-bottom: 54px !important;
+    }
+    .app-work-page.active #previewSection #patternWrap {
+      flex: 1 1 auto !important;
+      min-height: 180px !important;
+      height: auto !important;
+      max-height: none !important;
+    }
+    .controls.control-dock {
+      flex: 0 0 auto !important;
+      position: relative !important;
+      width: 100% !important;
+      max-height: none !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      display: grid !important;
+      gap: 6px !important;
+    }
+    .control-panel-float {
+      position: relative !important;
+      z-index: 7 !important;
+      max-height: 190px !important;
+      min-height: 122px !important;
+      overflow-y: auto !important;
+      overscroll-behavior: contain !important;
+      -webkit-overflow-scrolling: touch !important;
+      padding: 10px !important;
+      border: 1px solid rgba(108, 136, 166, .18) !important;
+      border-radius: 17px !important;
+      background: rgba(255,255,255,.96) !important;
+      box-shadow: 0 -10px 24px rgba(58,83,110,.10) !important;
+    }
+    .tool-panel {
+      display: none !important;
+      gap: 8px !important;
+    }
+    .tool-panel.active {
+      display: grid !important;
+    }
+    .tool-panel-title {
+      display: none !important;
+    }
+    .tool-panel-grid {
+      display: grid !important;
+      gap: 10px !important;
+      min-width: 0 !important;
+    }
+    .tool-panel-grid.two-cols {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      align-items: start !important;
+    }
+    .tool-panel-grid.two-cols #customColorGroup {
+      grid-column: 1 / -1 !important;
+    }
+    .control-dock .control-group,
+    .control-dock .tool-card {
+      padding: 0 !important;
+      margin: 0 !important;
+      border-bottom: 0 !important;
+      background: transparent !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    .control-dock label,
+    .control-dock .small-title {
+      margin-bottom: 5px !important;
+      font-size: 12px !important;
+      line-height: 1.2 !important;
+    }
+    .control-dock .hint {
+      display: none !important;
+    }
+    .control-dock .row {
+      grid-template-columns: minmax(0, 1fr) 48px !important;
+      gap: 6px !important;
+    }
+    .control-dock .row-2,
+    .control-dock .row-3,
+    .control-dock .btn-grid {
+      gap: 6px !important;
+    }
+    .control-dock .row-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+    .control-dock .value {
+      padding: 4px 0 !important;
+      border-radius: 8px !important;
+      font-size: 12px !important;
+    }
+    .control-dock select,
+    .control-dock input[type="file"],
+    .control-dock input[type="number"],
+    .control-dock input[type="color"],
+    .control-dock textarea,
+    .control-dock button {
+      min-height: 32px !important;
+      padding: 6px 8px !important;
+      border-radius: 9px !important;
+      font-size: 12px !important;
+    }
+    .control-dock input[type="color"] {
+      height: 36px !important;
+      padding: 3px !important;
+    }
+    .control-dock input[type="range"] {
+      height: 22px !important;
+      margin: 0 !important;
+    }
+    .control-dock .check-row {
+      margin-top: 6px !important;
+      gap: 6px !important;
+      font-size: 12px !important;
+    }
+    .control-dock .grid-line-row {
+      gap: 8px !important;
+      margin-top: 6px !important;
+    }
+    .control-dock .grid-line-options {
+      gap: 8px !important;
+    }
+    .control-dock .tone-toggle-btn {
+      display: none !important;
+    }
+    .control-dock .tone-fields,
+    .control-dock .toggle-fields {
+      display: block !important;
+      padding-top: 0 !important;
+    }
+    .control-dock #editorPaletteBox.palette {
+      max-height: 52px !important;
+      gap: 6px !important;
+      margin-top: 6px !important;
+    }
+    .control-dock .swatch {
+      width: 28px !important;
+      height: 28px !important;
+    }
+    .control-dock .sep {
+      margin: 8px 0 !important;
+    }
+    .control-dock .status-line,
+    .control-dock .mono {
+      font-size: 11px !important;
+      line-height: 1.35 !important;
+    }
+    .control-dock #previewEditModeBtn {
+      margin-bottom: 6px !important;
+    }
+    .tool-tab-strip {
+      display: flex !important;
+      gap: 7px !important;
+      align-items: center !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+      padding: 4px 2px 2px !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+    .tool-tab-strip::-webkit-scrollbar { display: none !important; }
+    .tool-tab {
+      flex: 0 0 auto !important;
+      width: 62px !important;
+      min-width: 62px !important;
+      height: 45px !important;
+      min-height: 45px !important;
+      padding: 3px 4px !important;
+      display: grid !important;
+      place-items: center !important;
+      gap: 1px !important;
+      border: 0 !important;
+      outline: 0 !important;
+      box-shadow: none !important;
+      border-radius: 10px !important;
+      font-size: 11px !important;
+      font-weight: 900 !important;
+      white-space: nowrap !important;
+      background: transparent !important;
+      color: var(--text) !important;
+    }
+    .tool-tab:hover,
+    .tool-tab:focus,
+    .tool-tab:active {
+      border: 0 !important;
+      outline: 0 !important;
+      box-shadow: none !important;
+    }
+    .tool-tab .tool-tab-icon {
+      font-size: 15px !important;
+      line-height: 1 !important;
+      color: var(--accent) !important;
+    }
+    .tool-tab.active {
+      border: 0 !important;
+      box-shadow: none !important;
+      background: rgba(108, 136, 166, .16) !important;
+      color: var(--text) !important;
+    }
+    @media (max-width: 420px), (max-height: 760px) {
+      .app-work-page.active main {
+        gap: 6px !important;
+        padding-left: 5px !important;
+        padding-right: 5px !important;
+      }
+      .app-work-page.active .workspace.preview-workspace-fulltop {
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+      }
+      .control-panel-float {
+        max-height: 170px !important;
+        min-height: 112px !important;
+        padding: 8px !important;
+        border-radius: 15px !important;
+      }
+      .tool-panel-grid.two-cols {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+      }
+      .tool-tab-strip {
+        gap: 6px !important;
+        padding: 5px 6px !important;
+      }
+      .tool-tab {
+        width: 58px !important;
+        min-width: 58px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        font-size: 10px !important;
+      }
+      .tool-tab .tool-tab-icon {
+        font-size: 14px !important;
+      }
+      .control-dock .row-2 {
+        grid-template-columns: 1fr 1fr !important;
+      }
+      .control-dock select,
+      .control-dock button {
+        font-size: 11px !important;
+      }
+    }
+
+
+    /* 本次调整：全站字体统一为微软雅黑 */
+    *,
+    *::before,
+    *::after {
+      font-family: "Microsoft YaHei", "微软雅黑", sans-serif !important;
+    }
+
+    /* 本次调整：第二界面与导出界面的主要边框改为直角 */
+    #appPage .panel,
+    #appPage .workspace,
+    #appPage .controls,
+    #appPage .canvas-card,
+    #appPage .canvas-wrap,
+    #appPage .control-panel-float,
+    #appPage .tool-tab-strip,
+    #appPage .tool-tab,
+    #appPage .stat,
+    #appPage .value,
+    #appPage .tool-card,
+    #appPage .opacity-mini-card,
+    #appPage input[type="file"],
+    #appPage input[type="number"],
+    #appPage input[type="color"],
+    #appPage select,
+    #appPage textarea,
+    #appPage button,
+    #exportPage .panel,
+    #exportPage .canvas-card,
+    #exportPage .canvas-wrap,
+    #exportPage .export-preview-wrap,
+    #exportPage .export-empty,
+    #exportPage .export-toolbar,
+    #exportPage .btn-grid,
+    #exportPage input[type="file"],
+    #exportPage input[type="number"],
+    #exportPage input[type="color"],
+    #exportPage select,
+    #exportPage textarea,
+    #exportPage button {
+      border-radius: 0 !important;
+    }
     @media print {
       body { background: #fff; }
       header, .controls, .tabs, .editor-bottom-toolbar, .editor-tools-grid, .stats, #previewSection, #editorSection { display: none !important; }
@@ -1428,29 +2188,22 @@
     </div>
 
     <div id="appPage" class="app-page app-work-page">
-      <div class="app-nav">
-        <button id="backHomeFromAppBtn" class="secondary">返回首页</button>
-        <button id="backUploadFromAppBtn" class="secondary">重选图片</button>
-        <button id="openExportPageBtn" class="secondary">导出图纸</button>
+      <div class="app-nav compact-nav-with-stats">
+        <button id="backHomeFromAppBtn" class="nav-arrow-only" aria-label="返回" title="返回">←</button>
+        <div class="stats compact-top-stats">
+          <div class="stat"><div id="statSize" class="num">-</div><div class="name">图纸尺寸</div></div>
+          <div class="stat"><div id="statColors" class="num">-</div><div class="name">颜色数量</div></div>
+          <div class="stat"><div id="statBeads" class="num">-</div><div class="name">总豆数</div></div>
+        </div>
+        <button id="openExportPageBtn" class="secondary">导出</button>
       </div>
 
       <main>
-        <section class="panel workspace">
-      <div class="stats">
-        <div class="stat"><div id="statSize" class="num">-</div><div class="name">图纸尺寸</div></div>
-        <div class="stat"><div id="statColors" class="num">-</div><div class="name">颜色数量</div></div>
-        <div class="stat"><div id="statBeads" class="num">-</div><div class="name">总豆数</div></div>
-      </div>
-
-      <div class="tabs">
-        <button id="tabPreview" class="tab-btn active">图纸预览</button>
-        <button id="tabEditor" class="tab-btn">图纸编辑</button>
-      </div>
-
+        <section class="panel workspace preview-workspace-fulltop">
       <section id="previewSection" class="tab-section active">
         <div class="editor-layout">
           <div class="canvas-card">
-            <div class="canvas-title"><span>拼豆图纸预览</span><span id="patternInfo">等待生成</span></div>
+            
             <div id="patternWrap" class="canvas-wrap editor-wrap pattern-wrap">
               <div id="patternStage" class="editor-stage">
                 <canvas id="patternCanvas"></canvas>
@@ -1458,119 +2211,34 @@
                 <div id="patternOverlay"></div>
               </div>
             </div>
-            <div class="status-line">电脑：拖动查看、滚轮缩放；手机：单指拖动，双指缩放。可直接在预览页撤销/重做，也可以按住查看原图或开启原图打底。</div>
             <div class="editor-bottom-toolbar preview-bottom-toolbar">
-              <button id="previewUndoBtn" class="secondary nav-btn" title="上一步">←</button>
-              <button id="previewRedoBtn" class="secondary nav-btn" title="下一步">→</button>
-              <button id="previewCompareOriginalBtn" class="secondary text-btn" title="按住查看原图">原图对比</button>
-              <button id="previewToggleOriginalBaseBtn" class="secondary text-btn" title="切换原图打底">原图打底</button>
-            </div>
-            <div id="previewOpacityPanel" class="editor-opacity-panel">
-              <div class="opacity-mini-card">
-                <div class="mini-title">原图底透明度</div>
-                <div class="row">
-                  <input id="previewBaseOpacityRange" type="range" min="0" max="100" value="50" />
-                  <div id="previewBaseOpacityValue" class="value">50</div>
-                </div>
+              <div class="preview-toolbar-left">
+                <button id="previewUndoBtn" class="secondary nav-btn" title="上一步">←</button>
+                <button id="previewRedoBtn" class="secondary nav-btn" title="下一步">→</button>
               </div>
-              <div class="opacity-mini-card">
-                <div class="mini-title">拼豆图纸透明度</div>
-                <div class="row">
-                  <input id="previewPatternOpacityRange" type="range" min="0" max="100" value="0" />
-                  <div id="previewPatternOpacityValue" class="value">0</div>
-                </div>
+              <div class="preview-toolbar-right">
+                <button id="previewCompareOriginalBtn" class="secondary text-btn" title="按住查看原图">原图对比</button>
               </div>
+              <button id="previewToggleOriginalBaseBtn" class="secondary text-btn preview-hidden-base-btn" title="切换原图打底" aria-hidden="true" tabindex="-1">原图打底</button>
             </div>
+            <div id="previewOpacityPanel" class="editor-opacity-panel preview-opacity-panel-hidden" aria-hidden="true"></div>
             <div class="hidden-original-buffer" aria-hidden="true">
               <span id="originalInfo">未选择图片</span>
               <canvas id="originalCanvas"></canvas>
             </div>
           </div>
-        </div>
-      </section>
 
-      <section id="editorSection" class="tab-section">
-        <div class="editor-layout">
-          <div class="canvas-card">
-            <div class="canvas-title"><span>编辑画布</span><span id="editorInfo">尚未进入编辑模式</span></div>
-            <div id="editorWrap" class="canvas-wrap editor-wrap">
-              <div id="editorStage" class="editor-stage">
-                <canvas id="editorCanvas"></canvas>
-                <canvas id="editorReferenceCanvas"></canvas>
-                <div id="editorOverlay"></div>
-              </div>
-            </div>
-            <div class="status-line">电脑：左键编辑、右键拖动、滚轮缩放；手机：单指编辑，双指拖动/缩放。建议在这里修掉零散颜色、背景杂点和边缘锯齿。</div>
-            <div class="editor-bottom-toolbar">
-              <button id="undoBtn" class="secondary nav-btn" title="上一步">←</button>
-              <button id="redoBtn" class="secondary nav-btn" title="下一步">→</button>
-              <button id="compareOriginalBtn" class="secondary text-btn" title="按住查看原图">原图对比</button>
-              <button id="toggleOriginalBaseBtn" class="secondary text-btn" title="切换原图打底">原图打底</button>
-            </div>
-            <div id="editorOpacityPanel" class="editor-opacity-panel">
-              <div class="opacity-mini-card">
-                <div class="mini-title">原图底透明度</div>
-                <div class="row">
-                  <input id="baseOpacityRange" type="range" min="0" max="100" value="50" />
-                  <div id="baseOpacityValue" class="value">50</div>
-                </div>
-              </div>
-              <div class="opacity-mini-card">
-                <div class="mini-title">拼豆图纸透明度</div>
-                <div class="row">
-                  <input id="patternOpacityRange" type="range" min="0" max="100" value="0" />
-                  <div id="patternOpacityValue" class="value">0</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="editor-tools-grid">
-            <div class="tool-card">
-              <p class="small-title">编辑工具</p>
-              <div class="row-3">
-                <button id="toolPaint" class="active">画笔</button>
-                <button id="toolErase" class="secondary">空豆</button>
-                <button id="toolPick" class="secondary">取色</button>
-              </div>
-              <div class="hint">“空豆”表示该格不放拼豆；取色后可对同色区域进行删除或替换。</div>
-              <div class="sep"></div>
-              <label>当前画笔颜色</label>
-              <div class="selected-color-box">
-                <div class="color-select-row"><div id="editColorPreview" class="color-preview" hidden></div><select id="editColor" hidden></select><input id="editColorPicker" type="color" value="#ff004d" title="自由选色" /></div>
-                <div>
-                  <div id="selectedColorText" class="mono">#ff004d</div>
-                  <div id="pickedIndexText" class="status-line">选中颜色编号：未选择</div>
-                  <div id="pickedSeedText" class="status-line">选中格子：未记录</div>
-                </div>
-              </div>
-              <div id="editorPaletteBox" class="palette"></div>
-            </div>
-
-            <div class="tool-card">
-              <p class="small-title">同色处理</p>
-              <div class="status-line">先用取色点击某一种颜色，再删除或替换。勾选连通区域后，只影响当前这一块。</div>
-              <div class="btn-grid">
-                <button id="deleteColorBtn" class="danger">删除该颜色</button>
-                <button id="replaceColorBtn" class="warn">替换该颜色</button>
-              </div>
-              <label class="check-row"><input id="connectedOnly" type="checkbox" /> <span>只处理当前连通色块</span></label>
-              <label style="margin-top:12px;">替换成</label>
-              <div class="color-select-row"><div id="replaceColorPreview" class="color-preview" hidden></div><select id="replaceColor" hidden></select><input id="replaceColorPicker" type="color" value="#ff004d" title="自由选色" /></div>
-              <div class="btn-grid">
-                <button id="cleanupPaletteBtn" class="secondary">清理未用颜色</button>
-                <button id="fillTransparentBtn" class="secondary">填充空豆</button>
-              </div>
-            </div>
-
-          </div>
         </div>
       </section>
 
     </section>
 
-        <section class="panel controls">
-<div class="control-group">
+        <section class="panel controls control-dock">
+          <div class="control-panel-float" aria-live="polite">
+            <div class="tool-panel active" data-panel="spec">
+              <div class="tool-panel-title">规格</div>
+              <div class="tool-panel-grid two-cols">
+                <div class="control-group">
         <label>图纸宽度 / 横向豆数</label>
         <div class="row">
           <input id="beadWidth" type="range" min="8" max="160" value="80" />
@@ -1578,8 +2246,7 @@
         </div>
         <div class="hint">高度会按原图比例自动计算。豆数越大，细节越多，但实际拼装也越费豆。</div>
       </div>
-
-      <div class="control-group">
+                <div class="control-group">
         <label>颜色模式</label>
         <select id="paletteMode">
           <option value="custom" selected>自动压缩为指定色数</option>
@@ -1590,25 +2257,18 @@
         </select>
         <div class="hint">默认会按你设置的色数从图片中自动提取主色，让图纸更干净；“自由颜色”会尽量保留更多原始像素色。</div>
       </div>
-
-      <div class="control-group" id="customColorGroup">
+                <div class="control-group" id="customColorGroup">
         <label>自动压缩色数</label>
         <div class="row">
           <input id="customColors" type="range" min="2" max="64" value="24" />
           <div id="customColorsValue" class="value">24</div>
         </div>
       </div>
-
-      <div class="control-group">
-        <label>白色背景不放豆</label>
-        <label class="check-row">
-          <input id="removeWhiteBg" type="checkbox" />
-          <span>生成图纸后，只清理与图纸最外圈连通的白色豆</span>
-        </label>
-        <div class="hint">不会参与颜色压缩或上色判断；会先按当前颜色模式完整生成图纸，再把边缘连通的白色背景豆设为空豆，主体内部白色不受影响。</div>
-      </div>
-
-      <div class="control-group">
+              </div>
+            </div>
+            <div class="tool-panel" data-panel="display">
+              <div class="tool-panel-title">显示</div>
+              <div class="control-group">
         <label>图纸显示</label>
         <div class="row-2">
           <select id="renderMode">
@@ -1629,17 +2289,30 @@
           </div>
         </div>
         <label class="check-row"><input id="showCoords" type="checkbox" checked /> <span>每 5 格显示坐标辅助线</span></label>
+        <label class="check-row"><input id="showOriginalBaseInline" type="checkbox" /> <span>原图打底</span></label>
+        <div id="patternOpacityInline" class="pattern-opacity-inline">
+          <label style="margin-top:10px;">拼豆图纸透明度</label>
+          <div class="row">
+            <input id="previewPatternOpacityRange" type="range" min="0" max="100" value="15" />
+            <div id="previewPatternOpacityValue" class="value">15</div>
+          </div>
+        </div>
       </div>
-
-      <div class="control-group">
-        <label>抖动 Dithering</label>
-        <select id="ditherMode">
-          <option value="none">关闭，更干净</option>
-          <option value="ordered">开启，细节更丰富但豆色更碎</option>
-        </select>
+            </div>
+            <div class="tool-panel" data-panel="bg">
+              <div class="tool-panel-title">去背景</div>
+              <div class="control-group">
+        <label>白色背景不放豆</label>
+        <label class="check-row">
+          <input id="removeWhiteBg" type="checkbox" />
+          <span>生成图纸后，只清理与图纸最外圈连通的白色豆</span>
+        </label>
+        <div class="hint">不会参与颜色压缩或上色判断；会先按当前颜色模式完整生成图纸，再把边缘连通的白色背景豆设为空豆，主体内部白色不受影响。</div>
       </div>
-
-      <div id="outlineControlGroup" class="control-group">
+            </div>
+            <div class="tool-panel" data-panel="outline">
+              <div class="tool-panel-title">描边</div>
+              <div id="outlineControlGroup" class="control-group">
         <p class="small-title">描边</p>
         <label>描边颜色</label>
         <div class="color-select-row"><div id="outlineColorPreview" class="color-preview" hidden></div><select id="outlineColor" hidden></select><input id="outlineColorPicker" type="color" value="#000000" title="自由选色" /></div>
@@ -1659,8 +2332,11 @@
         <button id="applyOutlineBtn" class="warn" style="margin-top:12px; width:100%;">应用描边</button>
         <div class="hint">“新增外描边”会在图像外侧新增一圈或多圈描边，不会覆盖原有图案。<br>“替换最外层像素”会把当前图像最外圈像素改成描边色。</div>
       </div>
-
-      <div id="toneControlGroup" class="control-group">
+            </div>
+            <div class="tool-panel" data-panel="tone">
+              <div class="tool-panel-title">调色</div>
+              <div class="tool-panel-grid two-cols">
+                <div id="toneControlGroup" class="control-group">
         <label class="tone-desktop-title">调色</label>
         <button id="toneToggleBtn" class="tone-toggle-btn secondary" type="button" aria-expanded="false">
           <span>调色</span>
@@ -1678,15 +2354,86 @@
           <div class="btn-grid"><button id="resetToneBtn" class="secondary">重置调色</button></div>
         </div>
       </div>
-
-    </section>
+                <div class="control-group">
+        <label>抖动 Dithering</label>
+        <select id="ditherMode">
+          <option value="none">关闭，更干净</option>
+          <option value="ordered">开启，细节更丰富但豆色更碎</option>
+        </select>
+      </div>
+              </div>
+            </div>
+            <div class="tool-panel" data-panel="draw">
+              <div class="tool-panel-title">绘制</div>
+              <div id="editToolsControlGroup" class="control-group collapsible-control-group">
+        <button id="editToolsToggleBtn" class="tone-toggle-btn secondary" type="button" aria-expanded="false">
+          <span>编辑工具</span>
+          <span id="editToolsToggleState">展开 ▼</span>
+        </button>
+        <div id="editToolsFields" class="toggle-fields">
+          <button id="previewEditModeBtn" class="secondary" type="button" style="width:100%; margin-bottom:10px;" disabled>进入编辑模式</button>
+          <div id="previewEditModeHint" class="status-line" style="margin-bottom:10px;">未进入编辑模式时，图纸区域用于拖动和缩放查看。</div>
+          <div class="row-3">
+            <button id="toolPaint" class="active">画笔</button>
+            <button id="toolErase" class="secondary">空豆</button>
+            <button id="toolPick" class="secondary">取色</button>
+          </div>
+          <div class="hint">“空豆”表示该格不放拼豆；取色后可对同色区域进行删除或替换。</div>
+          <div class="sep"></div>
+          <label>当前画笔颜色</label>
+          <div class="selected-color-box">
+            <div class="color-select-row"><div id="editColorPreview" class="color-preview" hidden></div><select id="editColor" hidden></select><input id="editColorPicker" type="color" value="#ff004d" title="自由选色" /></div>
+            <div>
+              <div id="selectedColorText" class="mono">#ff004d</div>
+              <div id="pickedIndexText" class="status-line">选中颜色编号：未选择</div>
+              <div id="pickedSeedText" class="status-line">选中格子：未记录</div>
+            </div>
+          </div>
+          <div id="editorPaletteBox" class="palette"></div>
+        </div>
+      </div>
+            </div>
+            <div class="tool-panel" data-panel="same">
+              <div class="tool-panel-title">同色处理</div>
+              <div id="sameColorControlGroup" class="control-group collapsible-control-group">
+        <button id="sameColorToggleBtn" class="tone-toggle-btn secondary" type="button" aria-expanded="false">
+          <span>同色处理</span>
+          <span id="sameColorToggleState">展开 ▼</span>
+        </button>
+        <div id="sameColorFields" class="toggle-fields">
+          <div class="status-line">先用取色点击某一种颜色，再删除或替换。勾选连通区域后，只影响当前这一块。</div>
+          <div class="btn-grid">
+            <button id="deleteColorBtn" class="danger">删除该颜色</button>
+            <button id="replaceColorBtn" class="warn">替换该颜色</button>
+          </div>
+          <label class="check-row"><input id="connectedOnly" type="checkbox" /> <span>只处理当前连通色块</span></label>
+          <label style="margin-top:12px;">替换成</label>
+          <div class="color-select-row"><div id="replaceColorPreview" class="color-preview" hidden></div><select id="replaceColor" hidden></select><input id="replaceColorPicker" type="color" value="#ff004d" title="自由选色" /></div>
+          <div class="btn-grid">
+            <button id="cleanupPaletteBtn" class="secondary">清理未用颜色</button>
+            <button id="fillTransparentBtn" class="secondary">填充空豆</button>
+          </div>
+        </div>
+      </div>
+            </div>
+          </div>
+          <div class="tool-tab-strip" role="tablist" aria-label="图纸功能分类">
+            <button class="tool-tab active" type="button" data-tool="spec" role="tab" aria-selected="true"><span class="tool-tab-icon">▦</span><span>规格</span></button>
+            <button class="tool-tab" type="button" data-tool="display" role="tab" aria-selected="false"><span class="tool-tab-icon">◫</span><span>显示</span></button>
+            <button class="tool-tab" type="button" data-tool="bg" role="tab" aria-selected="false"><span class="tool-tab-icon">✦</span><span>去背景</span></button>
+            <button class="tool-tab" type="button" data-tool="outline" role="tab" aria-selected="false"><span class="tool-tab-icon">⬚</span><span>描边</span></button>
+            <button class="tool-tab" type="button" data-tool="tone" role="tab" aria-selected="false"><span class="tool-tab-icon">☼</span><span>调色</span></button>
+            <button class="tool-tab" type="button" data-tool="draw" role="tab" aria-selected="false"><span class="tool-tab-icon">✎</span><span>绘制</span></button>
+            <button class="tool-tab" type="button" data-tool="same" role="tab" aria-selected="false"><span class="tool-tab-icon">●</span><span>同色</span></button>
+          </div>
+        </section>
       </main>
     </div>
 
     <div id="exportPage" class="app-page export-work-page">
       <div class="page-topbar export-topbar">
         <button id="backToAppFromExportBtn" class="secondary back-btn">←</button>
-        <div class="page-title">导出图纸</div>
+        <div class="page-title">导出</div>
         <button id="backHomeFromExportBtn" class="secondary export-home-btn">首页</button>
       </div>
       <main class="export-page-main">
@@ -1735,8 +2482,9 @@
     const patternWrap = $("patternWrap");
     const patternStage = $("patternStage");
     const patternOverlay = $("patternOverlay");
-    const editorCanvas = $("editorCanvas");
-    const editorReferenceCanvas = $("editorReferenceCanvas");
+    // 原来的独立“图纸编辑”页已移除；编辑功能现在复用预览画布。
+    const editorCanvas = $("editorCanvas") || patternCanvas;
+    const editorReferenceCanvas = $("editorReferenceCanvas") || patternReferenceCanvas;
     const exportPreviewWrap = $("exportPreviewWrap");
     const exportSvgMount = $("exportSvgMount");
     const originalCtx = originalCanvas.getContext("2d", { willReadFrequently: true });
@@ -1744,14 +2492,14 @@
     const patternReferenceCtx = patternReferenceCanvas.getContext("2d", { willReadFrequently: true });
     const editorCtx = editorCanvas.getContext("2d", { willReadFrequently: true });
     const editorReferenceCtx = editorReferenceCanvas.getContext("2d", { willReadFrequently: true });
-    const editorStage = $("editorStage");
-    const editorOverlay = $("editorOverlay");
+    const editorStage = $("editorStage") || patternStage;
+    const editorOverlay = $("editorOverlay") || patternOverlay;
 
     let sourceImage = null;
     let lastPatternData = null;
     let showOriginalBase = false;
     let isOriginalCompareActive = false;
-    let originalBaseTransparency = 50;
+    let originalBaseTransparency = 0;
     let patternTransparency = 0;
     let activeTool = "paint";
     let selectedPaletteIndex = null;
@@ -1775,6 +2523,7 @@
     let exportPreviewPanStartScrollLeft = 0;
     let exportPreviewPanStartScrollTop = 0;
     let isDrawing = false;
+    let previewEditModeActive = false;
     let isPanning = false;
     let panStartX = 0;
     let panStartY = 0;
@@ -2099,6 +2848,7 @@
       if (undoStack.length > MAX_HISTORY) undoStack.shift();
       redoStack.length = 0;
       updateUndoRedoButtons();
+      updatePreviewEditModeUI();
     }
     function undo() {
       if (!undoStack.length || !lastPatternData) return;
@@ -2362,7 +3112,8 @@
       if (!lastPatternData) return;
       const total = countTotalBeads();
       const zoomText = previewZoom && Math.abs(previewZoom - 1) > 0.01 ? `，预览 ${Math.round(previewZoom * 100)}%` : "";
-      $("patternInfo").textContent = `${lastPatternData.width} × ${lastPatternData.height}，${total} 颗${zoomText}`;
+      const patternInfoEl = $("patternInfo");
+      if (patternInfoEl) patternInfoEl.textContent = `${lastPatternData.width} × ${lastPatternData.height}，${total} 颗${zoomText}`;
     }
     function applyPreviewZoom() {
       const zoom = clamp(previewZoom, MIN_PREVIEW_ZOOM, MAX_PREVIEW_ZOOM);
@@ -2389,6 +3140,15 @@
       const availableH = Math.max(180, Math.round((rect.height || patternWrap.clientHeight || 360) - 24));
       return { width: availableW, height: availableH };
     }
+    function getPatternWrapViewportSize() {
+      if (!patternWrap) return { width: 320, height: 360 };
+      const styles = window.getComputedStyle(patternWrap);
+      const padX = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+      const padY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
+      const width = Math.max(180, Math.round((patternWrap.clientWidth || 320) - padX));
+      const height = Math.max(180, Math.round((patternWrap.clientHeight || 360) - padY));
+      return { width, height };
+    }
     function getPatternContentOffset() {
       return {
         left: (patternStage ? patternStage.offsetLeft : 0) + (patternCanvas ? patternCanvas.offsetLeft : 0),
@@ -2397,29 +3157,35 @@
     }
     function fitPreviewZoomToOriginalSize() {
       if (!lastPatternData || !sourceImage) return;
-      const originalSize = getOriginalPreviewDisplaySize();
+      const viewportSize = getPatternWrapViewportSize();
       const renderOptions = getPatternRenderOptions(false);
-      const gridW = Math.max(1, lastPatternData.width * renderOptions.cell);
-      const gridH = Math.max(1, lastPatternData.height * renderOptions.cell);
+      const baseW = Math.max(1, lastPatternData.width * renderOptions.cell + renderOptions.margin * 2);
+      const baseH = Math.max(1, lastPatternData.height * renderOptions.cell + renderOptions.margin * 2);
 
-      // 只用真正的豆格区域计算默认缩放，不把坐标边距算进来。
-      // 这样“拼豆图纸预览”的图案大小和原图预览保持一致比例。
+      // 初始预览按“整张图纸画布”适配宽度，而不是只按豆格主体适配。
+      // 这样无论横向豆数是多少，刚打开时都会贴合当前页面可视宽度，
+      // 不会一进来就出现横向超出和底部横向滚动条。
       previewZoom = clamp(
-        Math.min(originalSize.width / gridW, originalSize.height / gridH),
+        viewportSize.width / baseW,
         MIN_PREVIEW_ZOOM,
         MAX_PREVIEW_ZOOM
       );
       initialPreviewZoom = previewZoom;
       drawPreviewPattern();
       requestAnimationFrame(() => {
-        const margin = (getPatternRenderOptions(false).margin || 0) * previewZoom;
-        const gridDisplayW = gridW * previewZoom;
-        const gridDisplayH = gridH * previewZoom;
         const contentOffset = getPatternContentOffset();
-        const targetLeft = contentOffset.left + margin - Math.max(0, (patternWrap.clientWidth - gridDisplayW) / 2);
-        const targetTop = contentOffset.top + margin - Math.max(0, (patternWrap.clientHeight - gridDisplayH) / 2);
-        patternWrap.scrollLeft = Math.max(0, targetLeft);
-        patternWrap.scrollTop = Math.max(0, targetTop);
+        const scaledW = baseW * previewZoom;
+        const scaledH = baseH * previewZoom;
+        patternWrap.scrollLeft = 0;
+        patternWrap.scrollTop = 0;
+
+        // 如果缩放后画布比容器更窄，则保持居中；如果更高，则从顶部开始显示。
+        if (scaledW < patternWrap.clientWidth) {
+          patternWrap.scrollLeft = Math.max(0, contentOffset.left - (patternWrap.clientWidth - scaledW) / 2);
+        }
+        if (scaledH < patternWrap.clientHeight) {
+          patternWrap.scrollTop = Math.max(0, contentOffset.top - (patternWrap.clientHeight - scaledH) / 2);
+        }
       });
       updatePatternInfo();
     }
@@ -2499,19 +3265,19 @@
 
     function updateOpacityControlsUI() {
       const panels = [$("previewOpacityPanel"), $("editorOpacityPanel")];
-      const baseRanges = [$("previewBaseOpacityRange"), $("baseOpacityRange")];
       const patternRanges = [$("previewPatternOpacityRange"), $("patternOpacityRange")];
-      const baseValues = [$("previewBaseOpacityValue"), $("baseOpacityValue")];
       const patternValues = [$("previewPatternOpacityValue"), $("patternOpacityValue")];
+      const inlineOpacity = $("patternOpacityInline");
+      const inlineBaseToggle = $("showOriginalBaseInline");
       panels.forEach(panel => { if (panel) panel.classList.toggle("show", !!showOriginalBase); });
-      baseRanges.forEach(range => { if (range) range.value = String(originalBaseTransparency); });
+      if (inlineOpacity) inlineOpacity.classList.toggle("show", !!showOriginalBase);
+      if (inlineBaseToggle) inlineBaseToggle.checked = !!showOriginalBase;
       patternRanges.forEach(range => { if (range) range.value = String(patternTransparency); });
-      baseValues.forEach(value => { if (value) value.textContent = String(originalBaseTransparency); });
       patternValues.forEach(value => { if (value) value.textContent = String(patternTransparency); });
     }
 
     function getBaseCanvasOpacity() {
-      return clamp(1 - originalBaseTransparency / 100, 0, 1);
+      return 1;
     }
 
     function getPatternCanvasOpacity() {
@@ -2635,6 +3401,8 @@
     }
 
     function updateEditorReferenceLayer() {
+      // 独立编辑画布已移除，原图对比/打底统一由预览画布处理。
+      if (editorCanvas === patternCanvas) return;
       const compareBtn = $("compareOriginalBtn");
       const baseBtn = $("toggleOriginalBaseBtn");
       updateOpacityControlsUI();
@@ -2682,8 +3450,9 @@
     function toggleOriginalBase() {
       if (!lastPatternData || !sourceImage) return;
       showOriginalBase = !showOriginalBase;
+      if (showOriginalBase) patternTransparency = 15;
       drawPreviewPattern();
-      if ($("editorSection").classList.contains("active")) drawEditor();
+      if (previewEditModeActive) drawPreviewPattern();
       updatePreviewReferenceLayer();
       updateEditorReferenceLayer();
     }
@@ -2727,102 +3496,29 @@
       try {
         refreshAllViews();
         fitPreviewZoomToOriginalSize();
-        if ($("editorSection").classList.contains("active")) autoFitZoom();
+        if (previewEditModeActive) updatePreviewEditModeUI();
       } catch (err) {
         renderOk = false;
         console.error("刷新图纸视图时出错：", err);
-        showToast("图纸已生成，但视图刷新异常，请尝试进入编辑或降低颜色数", true);
+        // 这里不再弹出红色错误提示，避免正常生成后被误导性的兜底提示打断。
+        // 真实错误仍会保留在控制台，方便后续调试。
       }
       if (renderOk) showToast("图纸已生成");
     }
 
     function getEditorRenderOptions() {
-      return {
-        cell: editorZoom,
-        margin: $("showCoords").checked ? 20 : 0,
-        renderMode: $("renderMode").value,
-        labelMode: $("labelMode").value,
-        showGrid: $("showGrid").checked,
-        showCoords: $("showCoords").checked,
-        gridLineColor: getGridLineColor(),
-        gridLineWidth: getGridLineWidth(),
-        coordGuideLineWidth: getCoordGuideLineWidth()
-      };
+      return getPreviewRenderOptions();
     }
 
     function drawEditor() {
-      if (!lastPatternData) {
-        editorCanvas.width = 1; editorCanvas.height = 1;
-        editorReferenceCanvas.width = 1; editorReferenceCanvas.height = 1;
-        editorCanvas.style.width = "1px"; editorCanvas.style.height = "1px";
-        editorReferenceCanvas.style.width = "1px"; editorReferenceCanvas.style.height = "1px";
-        editorStage.style.width = "1px"; editorStage.style.height = "1px";
-        editorOverlay.style.opacity = "0";
-        editorOverlay.style.backgroundImage = "none";
-        editorReferenceCanvas.style.display = "none";
-        editorCanvas.style.visibility = "visible";
-        editorOverlay.style.visibility = "visible";
-        $("editorInfo").textContent = "尚未进入编辑模式";
-        return;
-      }
-      const { width, height } = lastPatternData;
-      const wrap = $("editorWrap");
-      const oldW = Math.max(1, editorStage.offsetWidth || 1);
-      const oldH = Math.max(1, editorStage.offsetHeight || 1);
-      const centerRatioX = (wrap.scrollLeft + wrap.clientWidth / 2) / oldW;
-      const centerRatioY = (wrap.scrollTop + wrap.clientHeight / 2) / oldH;
-
-      const opt = getEditorRenderOptions();
-      const editorBaseW = lastPatternData.width * opt.cell + opt.margin * 2;
-      const editorBaseH = lastPatternData.height * opt.cell + opt.margin * 2;
-      opt.outputScale = getCanvasOutputScale(editorBaseW, editorBaseH, 1, MAX_EDITOR_BACKING_PIXELS);
-      opt.transparentBackground = showOriginalBase && !isOriginalCompareActive;
-      drawPatternToCanvas(editorCanvas, editorCtx, lastPatternData, opt);
-
-      // 编辑区保持视觉上的真实缩放，但底层画布会按设备性能自动限制像素尺寸，
-      // 避免 100+ 豆大图放大时生成超大 canvas 导致卡顿。
-      const editorDisplayW = getCanvasBaseWidth(editorCanvas);
-      const editorDisplayH = getCanvasBaseHeight(editorCanvas);
-      editorCanvas.style.width = `${editorDisplayW}px`;
-      editorCanvas.style.height = `${editorDisplayH}px`;
-      editorCanvas.style.background = showOriginalBase ? "transparent" : "#fff";
-      editorStage.style.width = `${editorDisplayW}px`;
-      editorStage.style.height = `${editorDisplayH}px`;
-      editorOverlay.style.width = `${editorDisplayW}px`;
-      editorOverlay.style.height = `${editorDisplayH}px`;
-      editorOverlay.style.opacity = "0";
-      editorOverlay.style.backgroundImage = "none";
-      drawEditorReferenceCanvas();
-      editorReferenceCanvas.style.width = `${editorDisplayW}px`;
-      editorReferenceCanvas.style.height = `${editorDisplayH}px`;
-      updateEditorReferenceLayer();
-
-      requestAnimationFrame(() => {
-        const newW = Math.max(1, editorStage.offsetWidth || 1);
-        const newH = Math.max(1, editorStage.offsetHeight || 1);
-        wrap.scrollLeft = Math.max(0, centerRatioX * newW - wrap.clientWidth / 2);
-        wrap.scrollTop = Math.max(0, centerRatioY * newH - wrap.clientHeight / 2);
-      });
-      const modeText = opt.renderMode === "squares" ? "方格" : "圆珠";
-      $("editorInfo").textContent = `${width} × ${height}，${modeText}显示，缩放 ${editorZoom}x`;
+      // 独立编辑画布已删除，预览画布会在 refreshAllViews / drawPreviewPattern 中刷新。
+      drawPreviewPattern();
     }
-    function computeFitZoom() {
-      if (!lastPatternData) return 16;
-      const wrap = $("editorWrap");
-      const availableW = Math.max(240, (wrap.clientWidth || 900) - 28);
-      const availableH = Math.max(240, Math.min(window.innerHeight * 0.62, 720) - 28);
-      return clamp(Math.floor(Math.min(availableW / lastPatternData.width, availableH / lastPatternData.height)), 4, 48);
-    }
+    function computeFitZoom() { return 16; }
     function setEditorZoom(value, markManual = true) {
-      editorZoom = clamp(value, 4, 48);
-      const zoomInput = $("editorZoom");
-      const zoomValue = $("editorZoomValue");
-      if (zoomInput) zoomInput.value = editorZoom;
-      if (zoomValue) zoomValue.textContent = editorZoom + "x";
-      if (markManual) userAdjustedZoom = true;
-      drawEditor();
+      setPreviewZoom(previewZoom, null);
     }
-    function autoFitZoom() { userAdjustedZoom = false; setEditorZoom(computeFitZoom(), false); }
+    function autoFitZoom() { fitPreviewZoomToOriginalSize(); }
 
     function renderPaletteBox(container) {
       if (!container) return;
@@ -3367,28 +4063,29 @@
     function refreshAllViews() {
       if (!lastPatternData) return;
       drawPreviewPattern();
-      if ($("editorSection").classList.contains("active")) drawEditor();
-      if ($("editorSection").classList.contains("active")) renderPalettes();
-      else updateEditableColorSelectors();
+      updateEditableColorSelectors();
+      renderPalettes();
       updateSelectedColorUI();
       if ($("dataSection").classList.contains("active")) updateExportSection();
       updateStats();
       updateUndoRedoButtons();
+      updatePreviewEditModeUI();
     }
     function setButtonsEnabled(enabled) {
-      ["openEditorBtn", "openExportPageBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "mirrorPatternBtn", "toggleBeadCodeBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "previewUndoBtn", "previewRedoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "previewCompareOriginalBtn", "previewToggleOriginalBaseBtn", "applyOutlineBtn"].forEach(id => {
+      ["openEditorBtn", "openExportPageBtn", "downloadPngBtn", "downloadSvgBtn", "downloadCsvBtn", "mirrorPatternBtn", "toggleBeadCodeBtn", "deleteColorBtn", "replaceColorBtn", "cleanupPaletteBtn", "fillTransparentBtn", "undoBtn", "redoBtn", "previewUndoBtn", "previewRedoBtn", "compareOriginalBtn", "toggleOriginalBaseBtn", "previewCompareOriginalBtn", "previewToggleOriginalBaseBtn", "applyOutlineBtn", "previewEditModeBtn"].forEach(id => {
         const el = $(id); if (el) el.disabled = !enabled;
       });
       updateUndoRedoButtons();
+      updatePreviewEditModeUI();
     }
 
     function getEditorCellFromEvent(evt) {
       if (!lastPatternData) return null;
-      const rect = editorCanvas.getBoundingClientRect();
-      const opt = getEditorRenderOptions();
-      const scaleX = editorCanvas.width / Math.max(1, rect.width);
-      const scaleY = editorCanvas.height / Math.max(1, rect.height);
-      const outputScale = Math.max(0.05, parseFloat(editorCanvas.dataset.outputScale || "1") || 1);
+      const rect = patternCanvas.getBoundingClientRect();
+      const opt = getPreviewRenderOptions();
+      const scaleX = patternCanvas.width / Math.max(1, rect.width);
+      const scaleY = patternCanvas.height / Math.max(1, rect.height);
+      const outputScale = Math.max(0.05, parseFloat(patternCanvas.dataset.outputScale || "1") || 1);
       const canvasX = (evt.clientX - rect.left) * scaleX / outputScale;
       const canvasY = (evt.clientY - rect.top) * scaleY / outputScale;
       const x = Math.floor((canvasX - opt.margin) / opt.cell);
@@ -3427,7 +4124,8 @@
       const nextIndex = activeTool === "erase" ? 0 : ensureColorInPalette(selectedColor);
       if (paintCell(cell, nextIndex)) {
         if (!isDrawing || undoStack.length === 0 || lastPaintKey.endsWith("first")) pushHistory();
-        drawEditor();
+        drawPreviewPattern();
+        updateStats();
       }
     }
     function getConnectedRegion(seedX, seedY, targetIndex) {
@@ -3654,8 +4352,8 @@
       lines.push(
         `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`,
         '<rect width="100%" height="100%" fill="#ffffff"/>',
-        `<text x="${layout.pagePad}" y="34" font-family="Arial, Microsoft YaHei, sans-serif" font-size="40" font-weight="800" fill="#243447">${escapeSvgAttr(EXPORT_SITE_LABEL)}</text>`,
-        `<text x="${w - layout.pagePad}" y="34" text-anchor="end" font-family="Arial, Microsoft YaHei, sans-serif" font-size="16" fill="#6f8092">${width} × ${height}｜${countTotalBeads()} 颗</text>`
+        `<text x="${layout.pagePad}" y="34" font-family="Microsoft YaHei, 微软雅黑, sans-serif" font-size="40" font-weight="800" fill="#243447">${escapeSvgAttr(EXPORT_SITE_LABEL)}</text>`,
+        `<text x="${w - layout.pagePad}" y="34" text-anchor="end" font-family="Microsoft YaHei, 微软雅黑, sans-serif" font-size="16" fill="#6f8092">${width} × ${height}｜${countTotalBeads()} 颗</text>`
       );
 
       lines.push(`<g id="pattern" transform="translate(${layout.drawingX}, ${layout.drawingY})">`);
@@ -3671,7 +4369,7 @@
         if (opt.labelMode !== "none" && opt.cell >= 12) {
           const text = opt.labelMode === "symbol" ? (SYMBOLS[(index - 1) % SYMBOLS.length] || String(index)) : String(index);
           const fill = luminance(color) < 135 ? "#ffffff" : "#202020";
-          lines.push(`<text x="${px + opt.cell / 2}" y="${py + opt.cell / 2 + opt.cell * .12}" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="${Math.max(8, Math.floor(opt.cell * .33))}" font-weight="700" fill="${fill}">${escapeSvgAttr(text)}</text>`);
+          lines.push(`<text x="${px + opt.cell / 2}" y="${py + opt.cell / 2 + opt.cell * .12}" text-anchor="middle" font-family="Microsoft YaHei, 微软雅黑, sans-serif" font-size="${Math.max(8, Math.floor(opt.cell * .33))}" font-weight="700" fill="${fill}">${escapeSvgAttr(text)}</text>`);
         }
       };
       const gridStroke = escapeSvgAttr(opt.gridLineColor || getGridLineColor());
@@ -3687,7 +4385,7 @@
         for (let y = 5; y < height; y += 5) lines.push(`<line x1="${opt.margin}" y1="${opt.margin + y * opt.cell}" x2="${opt.margin + width * opt.cell}" y2="${opt.margin + y * opt.cell}" stroke="${guideStroke}" stroke-width="${guideStrokeWidth}" shape-rendering="crispEdges"/>`);
       }
       if (opt.showCoords) {
-        lines.push(`<g font-family="Arial, Microsoft YaHei, sans-serif" font-size="11" fill="#61758a">`);
+        lines.push(`<g font-family="Microsoft YaHei, 微软雅黑, sans-serif" font-size="11" fill="#61758a">`);
         for (let x = 0; x < width; x += 5) lines.push(`<text x="${opt.margin + x * opt.cell + opt.cell / 2}" y="${opt.margin - 10}" text-anchor="middle" dominant-baseline="middle">${x + 1}</text>`);
         for (let y = 0; y < height; y += 5) lines.push(`<text x="${opt.margin - 8}" y="${opt.margin + y * opt.cell + opt.cell / 2}" text-anchor="end" dominant-baseline="middle">${y + 1}</text>`);
         lines.push(`</g>`);
@@ -3696,8 +4394,8 @@
 
       if (layout.entries.length) {
         lines.push(`<g id="materials" transform="translate(${layout.materialX}, ${layout.materialY})">`);
-        lines.push(`<text x="0" y="32" font-family="Arial, Microsoft YaHei, sans-serif" font-size="32" font-weight="800" fill="#243447">材料清单</text>`);
-        lines.push(`<text x="150" y="32" font-family="Arial, Microsoft YaHei, sans-serif" font-size="17" fill="#6f8092">图纸编号 / ${escapeSvgAttr(getMaterialColorTitle())} / 数量</text>`);
+        lines.push(`<text x="0" y="32" font-family="Microsoft YaHei, 微软雅黑, sans-serif" font-size="32" font-weight="800" fill="#243447">材料清单</text>`);
+        lines.push(`<text x="150" y="32" font-family="Microsoft YaHei, 微软雅黑, sans-serif" font-size="17" fill="#6f8092">图纸编号 / ${escapeSvgAttr(getMaterialColorTitle())} / 数量</text>`);
         layout.entries.forEach((e, i) => {
           const col = i % layout.itemsPerRow;
           const row = Math.floor(i / layout.itemsPerRow);
@@ -3707,13 +4405,13 @@
           lines.push(`<g transform="translate(${x}, ${y})">`);
           if (opt.renderMode === "squares") {
             lines.push(`<rect x="0" y="6" width="96" height="96" rx="16" ry="16" fill="${escapeSvgAttr(e.color)}" stroke="rgba(0,0,0,.18)" stroke-width="1"/>`);
-            lines.push(`<text x="48" y="54" text-anchor="middle" dominant-baseline="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="39" font-weight="800" fill="${textFill}">${escapeSvgAttr(getMaterialNumberLabel(e))}</text>`);
+            lines.push(`<text x="48" y="54" text-anchor="middle" dominant-baseline="middle" font-family="Microsoft YaHei, 微软雅黑, sans-serif" font-size="39" font-weight="800" fill="${textFill}">${escapeSvgAttr(getMaterialNumberLabel(e))}</text>`);
           } else {
             lines.push(`<circle cx="48" cy="54" r="45" fill="${escapeSvgAttr(e.color)}" stroke="rgba(0,0,0,.18)" stroke-width="1"/>`);
-            lines.push(`<text x="48" y="54" text-anchor="middle" dominant-baseline="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="39" font-weight="800" fill="${textFill}">${escapeSvgAttr(getMaterialNumberLabel(e))}</text>`);
+            lines.push(`<text x="48" y="54" text-anchor="middle" dominant-baseline="middle" font-family="Microsoft YaHei, 微软雅黑, sans-serif" font-size="39" font-weight="800" fill="${textFill}">${escapeSvgAttr(getMaterialNumberLabel(e))}</text>`);
           }
           const materialText = `${getMaterialColorCode(e)} ×${e.count}`;
-          lines.push(`<text x="126" y="54" dominant-baseline="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="51" fill="#243447">${escapeSvgAttr(materialText)}</text>`);
+          lines.push(`<text x="126" y="54" dominant-baseline="middle" font-family="Microsoft YaHei, 微软雅黑, sans-serif" font-size="51" fill="#243447">${escapeSvgAttr(materialText)}</text>`);
           lines.push(`</g>`);
         });
         lines.push(`</g>`);
@@ -3740,10 +4438,10 @@
     function clearAll() {
       sourceImage = null; lastPatternData = null; selectedPaletteIndex = null; selectedSeed = null;
       showOriginalBase = false; isOriginalCompareActive = false;
-      originalBaseTransparency = 50; patternTransparency = 0;
+      originalBaseTransparency = 0; patternTransparency = 0;
       updateOpacityControlsUI();
       undoStack = []; redoStack = []; fileInput.value = "";
-      [originalCanvas, patternCanvas, patternReferenceCanvas, editorCanvas, editorReferenceCanvas].forEach(c => { c.width = 1; c.height = 1; });
+      Array.from(new Set([originalCanvas, patternCanvas, patternReferenceCanvas, editorCanvas, editorReferenceCanvas])).forEach(c => { if (c) { c.width = 1; c.height = 1; } });
       previewZoom = 1;
       initialPreviewZoom = 1;
       exportPreviewZoom = 1;
@@ -3756,38 +4454,58 @@
       patternCanvas.style.opacity = "1";
       patternCanvas.style.background = "#fff";
       patternOverlay.style.visibility = "visible";
-      editorReferenceCanvas.style.display = "none";
-      editorReferenceCanvas.style.opacity = "0";
-      editorCanvas.style.visibility = "visible";
-      editorCanvas.style.opacity = "1";
-      editorCanvas.style.background = "#fff";
-      editorOverlay.style.visibility = "visible";
-      $("originalInfo").textContent = "未选择图片"; $("patternInfo").textContent = "等待生成"; $("editorInfo").textContent = "尚未进入编辑模式";
+      if (editorCanvas !== patternCanvas) {
+        editorReferenceCanvas.style.display = "none";
+        editorReferenceCanvas.style.opacity = "0";
+        editorCanvas.style.visibility = "visible";
+        editorCanvas.style.opacity = "1";
+        editorCanvas.style.background = "#fff";
+        editorOverlay.style.visibility = "visible";
+      }
+      setPreviewEditMode(false);
+      $("originalInfo").textContent = "未选择图片"; const patternInfoEl = $("patternInfo"); if (patternInfoEl) patternInfoEl.textContent = "等待生成";
       $("statSize").textContent = "-"; $("statColors").textContent = "-"; $("statBeads").textContent = "-";
       const paletteBox = $("paletteBox"); if (paletteBox) paletteBox.innerHTML = ""; $("editorPaletteBox").innerHTML = ""; $("materialsTableWrap").innerHTML = ""; clearExportPreview();
       setButtonsEnabled(false); setConfirmImageReady(false); showToast("已清空");
     }
-    function switchTab(tab) {
-      const map = { preview: ["tabPreview", "previewSection"], editor: ["tabEditor", "editorSection"] };
-      if (!map[tab]) tab = "preview";
-      Object.values(map).forEach(([btn, section]) => { $(btn).classList.remove("active"); $(section).classList.remove("active"); });
-      $(map[tab][0]).classList.add("active"); $(map[tab][1]).classList.add("active");
-      const appPage = $("appPage");
-      if (appPage) appPage.classList.toggle("editor-active", tab === "editor");
-      if (tab === "editor" && lastPatternData) {
-        requestAnimationFrame(() => {
-          try {
-            if (!userAdjustedZoom) autoFitZoom();
-            else drawEditor();
-            renderPalettes();
-            updateSelectedColorUI();
-          } catch (err) {
-            console.error("进入编辑模式时出错：", err);
-            showToast("编辑模式加载失败，请降低图纸宽度或颜色数量后再试", true);
-          }
-        });
+    function updatePreviewEditModeUI() {
+      const btn = $("previewEditModeBtn");
+      const hint = $("previewEditModeHint");
+      if (btn) {
+        btn.disabled = !lastPatternData;
+        btn.textContent = previewEditModeActive ? "退出编辑模式" : "进入编辑模式";
+        btn.classList.toggle("active", previewEditModeActive);
+        btn.classList.toggle("secondary", !previewEditModeActive);
+      }
+      if (hint) {
+        hint.textContent = previewEditModeActive
+          ? "编辑模式中：左键/单指编辑，右键或双指拖动，滚轮或双指缩放。"
+          : "未进入编辑模式时，图纸区域用于拖动和缩放查看。";
+      }
+      if (patternWrap) {
+        patternWrap.classList.toggle("preview-editing", previewEditModeActive);
+        patternWrap.style.cursor = previewEditModeActive ? "crosshair" : "grab";
       }
     }
+
+    function setPreviewEditMode(active) {
+      previewEditModeActive = !!active && !!lastPatternData;
+      isDrawing = false;
+      isPanning = false;
+      isPreviewPanning = false;
+      lastPaintKey = "";
+      updatePreviewEditModeUI();
+    }
+
+    function switchTab(tab) {
+      // 旧版的“图纸编辑”独立页已经删除；现在始终停留在预览页。
+      const previewSection = $("previewSection");
+      if (previewSection) previewSection.classList.add("active");
+      const appPage = $("appPage");
+      if (appPage) appPage.classList.remove("editor-active");
+      updatePreviewEditModeUI();
+    }
+
     function showToast(text, isError = false) {
       const toast = $("toast");
       toast.textContent = text;
@@ -3864,6 +4582,7 @@
 
       wrap.addEventListener("touchstart", evt => {
         if (!lastPatternData) return;
+        if (wrap === patternWrap && previewEditModeActive && evt.touches.length === 1) return;
         if (evt.touches.length === 1) {
           const t = evt.touches[0];
           touchMode = "pan";
@@ -3911,54 +4630,14 @@
     }
 
     let editorTouchMode = "";
-    let editorPinchStartDistance = 1;
-    let editorPinchStartZoom = 16;
-    let editorPinchStartStageW = 1;
-    let editorPinchStartStageH = 1;
-    let editorPinchAnchorX = 0;
-    let editorPinchAnchorY = 0;
-
-    function beginEditorPinch(evt) {
-      const wrap = $("editorWrap");
-      const mid = touchMidpoint(evt.touches[0], evt.touches[1]);
-      const wrapRect = wrap.getBoundingClientRect();
-      editorTouchMode = "pinch";
-      editorPinchStartDistance = Math.max(1, touchDistance(evt.touches[0], evt.touches[1]));
-      editorPinchStartZoom = editorZoom;
-      editorPinchStartStageW = Math.max(1, editorStage.offsetWidth || editorCanvas.width || 1);
-      editorPinchStartStageH = Math.max(1, editorStage.offsetHeight || editorCanvas.height || 1);
-      editorPinchAnchorX = wrap.scrollLeft + (mid.clientX - wrapRect.left);
-      editorPinchAnchorY = wrap.scrollTop + (mid.clientY - wrapRect.top);
-      finishEditorTouchDrawing();
-      safePreventDefault(evt);
-    }
-
-    function updateEditorPinch(evt) {
-      const wrap = $("editorWrap");
-      const mid = touchMidpoint(evt.touches[0], evt.touches[1]);
-      const wrapRect = wrap.getBoundingClientRect();
-      const nextDistance = Math.max(1, touchDistance(evt.touches[0], evt.touches[1]));
-      const nextZoom = Math.round(editorPinchStartZoom * (nextDistance / editorPinchStartDistance));
-      setEditorZoom(nextZoom, true);
-      requestAnimationFrame(() => {
-        const newW = Math.max(1, editorStage.offsetWidth || editorCanvas.width || 1);
-        const newH = Math.max(1, editorStage.offsetHeight || editorCanvas.height || 1);
-        wrap.scrollLeft = Math.max(0, editorPinchAnchorX * (newW / editorPinchStartStageW) - (mid.clientX - wrapRect.left));
-        wrap.scrollTop = Math.max(0, editorPinchAnchorY * (newH / editorPinchStartStageH) - (mid.clientY - wrapRect.top));
-      });
-      safePreventDefault(evt);
-    }
 
     function bindEditorTouchControls() {
-      const wrap = $("editorWrap");
+      const wrap = patternWrap;
       if (!wrap) return;
       wrap.addEventListener("touchstart", evt => {
-        if (!lastPatternData) return;
-        if (evt.touches.length >= 2) {
-          beginEditorPinch(evt);
-          return;
-        }
-        if (evt.touches.length !== 1 || editorTouchMode === "pinch") return;
+        if (!previewEditModeActive || !lastPatternData) return;
+        if (evt.touches.length >= 2) return; // 双指交给预览缩放/拖动逻辑
+        if (evt.touches.length !== 1) return;
         const point = touchPoint(evt.touches[0]);
         const fakeEvt = makeClientEvent(point);
         const cell = getEditorCellFromEvent(fakeEvt);
@@ -3972,12 +4651,8 @@
       }, { passive: false });
 
       wrap.addEventListener("touchmove", evt => {
-        if (!lastPatternData) return;
-        if (evt.touches.length >= 2) {
-          if (editorTouchMode !== "pinch") beginEditorPinch(evt);
-          updateEditorPinch(evt);
-          return;
-        }
+        if (!previewEditModeActive || !lastPatternData) return;
+        if (evt.touches.length >= 2) return;
         if (editorTouchMode === "draw" && isDrawing && evt.touches.length === 1) {
           handleEditorAction(makeClientEvent(touchPoint(evt.touches[0])));
           safePreventDefault(evt);
@@ -4096,7 +4771,6 @@
     $("startGenerateBtn").addEventListener("click", openImagePicker);
     $("myPatternsBtn").addEventListener("click", () => showPage("myPatternsPage", "forward"));
     $("myPatternsBackBtn").addEventListener("click", () => showPage("homePage", "back"));
-    $("backUploadFromAppBtn").addEventListener("click", openImagePicker);
     $("backHomeFromAppBtn").addEventListener("click", () => showPage("homePage", "back"));
     $("openExportPageBtn").addEventListener("click", () => {
       if (!lastPatternData) { showToast("请先生成图纸", true); return; }
@@ -4113,9 +4787,12 @@
         sourceImage = img;
         lastPatternData = null;
         drawOriginalImage(img);
-        generatePattern();
         showPage("appPage", "forward");
-        showToast("图纸已生成");
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            generatePattern();
+          });
+        });
         URL.revokeObjectURL(img.src);
       };
       img.onerror = () => showToast("图片读取失败", true);
@@ -4162,6 +4839,44 @@
       updateToneToggleState();
     });
     updateToneToggleState();
+
+    function updateCollapsibleToggleState(groupId, btnId, stateId) {
+      const group = $(groupId);
+      const btn = $(btnId);
+      const state = $(stateId);
+      if (!group || !btn || !state) return;
+      const open = group.classList.contains("toggle-open");
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+      state.textContent = open ? "收起 ▲" : "展开 ▼";
+    }
+    function bindCollapsibleToggle(groupId, btnId, stateId) {
+      const btn = $(btnId);
+      const group = $(groupId);
+      if (!btn || !group) return;
+      btn.addEventListener("click", () => {
+        group.classList.toggle("toggle-open");
+        updateCollapsibleToggleState(groupId, btnId, stateId);
+      });
+      updateCollapsibleToggleState(groupId, btnId, stateId);
+    }
+    bindCollapsibleToggle("editToolsControlGroup", "editToolsToggleBtn", "editToolsToggleState");
+    bindCollapsibleToggle("sameColorControlGroup", "sameColorToggleBtn", "sameColorToggleState");
+
+    function setActiveToolPanel(name) {
+      document.querySelectorAll(".tool-tab").forEach(btn => {
+        const active = btn.dataset.tool === name;
+        btn.classList.toggle("active", active);
+        btn.setAttribute("aria-selected", active ? "true" : "false");
+        if (active) btn.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+      });
+      document.querySelectorAll(".tool-panel").forEach(panel => {
+        panel.classList.toggle("active", panel.dataset.panel === name);
+      });
+    }
+    document.querySelectorAll(".tool-tab").forEach(btn => {
+      btn.addEventListener("click", () => setActiveToolPanel(btn.dataset.tool));
+    });
+    setActiveToolPanel("spec");
 
     $("resetToneBtn").addEventListener("click", () => {
       ["brightnessRange", "contrastRange", "saturationRange", "temperatureRange"].forEach(id => $(id).value = 0);
@@ -4212,8 +4927,12 @@
       }
     });
 
-    $("tabPreview").addEventListener("click", () => switchTab("preview"));
-    $("tabEditor").addEventListener("click", () => switchTab("editor"));
+    const tabPreviewBtn = $("tabPreview");
+    const tabEditorBtn = $("tabEditor");
+    if (tabPreviewBtn) tabPreviewBtn.addEventListener("click", () => switchTab("preview"));
+    if (tabEditorBtn) tabEditorBtn.addEventListener("click", () => switchTab("editor"));
+    const previewEditModeBtn = $("previewEditModeBtn");
+    if (previewEditModeBtn) previewEditModeBtn.addEventListener("click", () => setPreviewEditMode(!previewEditModeActive));
     $("toolPaint").addEventListener("click", () => setTool("paint"));
     $("toolErase").addEventListener("click", () => setTool("erase"));
     $("toolPick").addEventListener("click", () => setTool("pick"));
@@ -4256,8 +4975,18 @@
       btn.addEventListener("touchend", stopCompareOriginal);
       btn.addEventListener("touchcancel", stopCompareOriginal);
     }
-    $("toggleOriginalBaseBtn").addEventListener("click", toggleOriginalBase);
-    $("previewToggleOriginalBaseBtn").addEventListener("click", toggleOriginalBase);
+    const toggleOriginalBaseBtn = $("toggleOriginalBaseBtn");
+    if (toggleOriginalBaseBtn) toggleOriginalBaseBtn.addEventListener("click", toggleOriginalBase);
+    const previewToggleOriginalBaseBtn = $("previewToggleOriginalBaseBtn");
+    if (previewToggleOriginalBaseBtn) previewToggleOriginalBaseBtn.addEventListener("click", toggleOriginalBase);
+    const showOriginalBaseInline = $("showOriginalBaseInline");
+    if (showOriginalBaseInline) showOriginalBaseInline.addEventListener("change", () => {
+      if (!lastPatternData || !sourceImage) {
+        showOriginalBaseInline.checked = false;
+        return;
+      }
+      if (!!showOriginalBase !== !!showOriginalBaseInline.checked) toggleOriginalBase();
+    });
     bindOriginalCompareButton("compareOriginalBtn");
     bindOriginalCompareButton("previewCompareOriginalBtn");
     function bindOpacityRange(id, type) {
@@ -4276,8 +5005,10 @@
     bindOpacityRange("baseOpacityRange", "base");
     bindOpacityRange("previewPatternOpacityRange", "pattern");
     bindOpacityRange("patternOpacityRange", "pattern");
-    $("undoBtn").addEventListener("click", undo);
-    $("redoBtn").addEventListener("click", redo);
+    const undoBtn = $("undoBtn");
+    const redoBtn = $("redoBtn");
+    if (undoBtn) undoBtn.addEventListener("click", undo);
+    if (redoBtn) redoBtn.addEventListener("click", redo);
     $("previewUndoBtn").addEventListener("click", undo);
     $("previewRedoBtn").addEventListener("click", redo);
     $("deleteColorBtn").addEventListener("click", deleteSelectedColor);
@@ -4297,6 +5028,7 @@
       setPreviewZoom(previewZoom * factor, evt);
     }, { passive: false });
     patternWrap.addEventListener("mousedown", evt => {
+      if (previewEditModeActive) return;
       if (!lastPatternData || evt.button !== 0) return;
       isPreviewPanning = true;
       previewPanStartX = evt.clientX;
@@ -4320,46 +5052,60 @@
 
     bindEditorTouchControls();
 
-    editorCanvas.addEventListener("contextmenu", evt => evt.preventDefault());
-    editorCanvas.addEventListener("mousedown", evt => {
-      if (!lastPatternData) return;
+    patternCanvas.addEventListener("contextmenu", evt => { if (previewEditModeActive) evt.preventDefault(); });
+    patternCanvas.addEventListener("mousedown", evt => {
+      if (!previewEditModeActive || !lastPatternData) return;
       if (evt.button === 2) {
-        const wrap = $("editorWrap"); isPanning = true; panStartX = evt.clientX; panStartY = evt.clientY; panStartScrollLeft = wrap.scrollLeft; panStartScrollTop = wrap.scrollTop; wrap.style.cursor = "grabbing"; return;
+        isPanning = true;
+        panStartX = evt.clientX;
+        panStartY = evt.clientY;
+        panStartScrollLeft = patternWrap.scrollLeft;
+        panStartScrollTop = patternWrap.scrollTop;
+        patternWrap.style.cursor = "grabbing";
+        evt.preventDefault();
+        return;
       }
       if (evt.button !== 0) return;
-      isDrawing = true; lastPaintKey = ""; pushHistory(); handleEditorAction(evt);
+      isDrawing = true;
+      lastPaintKey = "";
+      if (activeTool !== "pick") pushHistory();
+      handleEditorAction(evt);
+      evt.preventDefault();
     });
-    editorCanvas.addEventListener("mousemove", evt => {
+    patternCanvas.addEventListener("mousemove", evt => {
+      if (!previewEditModeActive) return;
       if (isPanning) {
-        const wrap = $("editorWrap"); wrap.scrollLeft = panStartScrollLeft - (evt.clientX - panStartX); wrap.scrollTop = panStartScrollTop - (evt.clientY - panStartY); return;
+        patternWrap.scrollLeft = panStartScrollLeft - (evt.clientX - panStartX);
+        patternWrap.scrollTop = panStartScrollTop - (evt.clientY - panStartY);
+        return;
       }
       if (!isDrawing) {
         const cell = getEditorCellFromEvent(evt);
         const modeText = $("renderMode").value === "squares" ? "方格" : "圆珠";
-        $("editorInfo").textContent = cell && lastPatternData
-          ? `${lastPatternData.width} × ${lastPatternData.height}，${modeText}显示，格子 ${cell.x + 1}, ${cell.y + 1}，缩放 ${editorZoom}x`
-          : lastPatternData ? `${lastPatternData.width} × ${lastPatternData.height}，${modeText}显示，缩放 ${editorZoom}x` : "尚未进入编辑模式";
+        const patternInfoEl = $("patternInfo");
+        if (patternInfoEl) patternInfoEl.textContent = cell && lastPatternData
+          ? `${lastPatternData.width} × ${lastPatternData.height}，${modeText}显示，格子 ${cell.x + 1}, ${cell.y + 1}，缩放 ${previewZoom.toFixed(2)}x`
+          : lastPatternData ? `${lastPatternData.width} × ${lastPatternData.height}，${modeText}显示，缩放 ${previewZoom.toFixed(2)}x` : "等待生成";
         return;
       }
       handleEditorAction(evt);
     });
     window.addEventListener("mouseup", () => {
       setOriginalCompareActive(false);
-      if (isPreviewPanning) { isPreviewPanning = false; patternWrap.style.cursor = "grab"; }
+      if (isPreviewPanning) { isPreviewPanning = false; patternWrap.style.cursor = previewEditModeActive ? "crosshair" : "grab"; }
       if (isExportPreviewPanning) { isExportPreviewPanning = false; exportPreviewWrap.style.cursor = "grab"; }
-      if (isPanning) { isPanning = false; $("editorWrap").style.cursor = "crosshair"; }
+      if (isPanning) { isPanning = false; patternWrap.style.cursor = previewEditModeActive ? "crosshair" : "grab"; }
       if (isDrawing) { isDrawing = false; lastPaintKey = ""; cleanupPalette(false); refreshAllViews(); }
     });
     window.addEventListener("blur", () => setOriginalCompareActive(false));
-    $("editorWrap").addEventListener("wheel", evt => { if (!lastPatternData) return; evt.preventDefault(); evt.stopPropagation(); setEditorZoom(editorZoom + (evt.deltaY < 0 ? 2 : -2), true); }, { passive: false });
-    window.addEventListener("resize", () => { if (lastPatternData && !userAdjustedZoom && $("editorSection").classList.contains("active")) setEditorZoom(computeFitZoom(), false); });
+    window.addEventListener("resize", () => { if (lastPatternData) fitPreviewZoomToOriginalSize(); });
     window.addEventListener("keydown", evt => {
       const isTyping = evt.target && ["TEXTAREA", "INPUT", "SELECT"].includes(evt.target.tagName);
-      if ((evt.ctrlKey || evt.metaKey) && ["+", "=", "-", "0"].includes(evt.key) && $("editorSection").classList.contains("active")) {
+      if ((evt.ctrlKey || evt.metaKey) && ["+", "=", "-", "0"].includes(evt.key) && previewEditModeActive) {
         evt.preventDefault();
-        if (evt.key === "+" || evt.key === "=") setEditorZoom(editorZoom + 2, true);
-        if (evt.key === "-") setEditorZoom(editorZoom - 2, true);
-        if (evt.key === "0") autoFitZoom();
+        if (evt.key === "+" || evt.key === "=") setPreviewZoom(previewZoom * 1.12);
+        if (evt.key === "-") setPreviewZoom(previewZoom / 1.12);
+        if (evt.key === "0") fitPreviewZoomToOriginalSize();
         return;
       }
       if (isTyping) return;
