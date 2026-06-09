@@ -2135,6 +2135,122 @@
     #exportPage button {
       border-radius: 0 !important;
     }
+
+
+    /* 本次调整：描边面板压缩为单行控制，模式改为二选一 */
+    #outlineControlGroup.outline-compact {
+      display: grid !important;
+      gap: 8px !important;
+    }
+    #outlineControlGroup.outline-compact .small-title,
+    .tool-panel[data-panel="outline"] > .tool-panel-title {
+      display: none !important;
+    }
+    #outlineControlGroup .outline-row {
+      display: grid !important;
+      grid-template-columns: 70px minmax(0, 1fr) !important;
+      gap: 8px !important;
+      align-items: center !important;
+      min-height: 32px !important;
+    }
+    #outlineControlGroup .outline-row > label {
+      margin: 0 !important;
+      white-space: nowrap !important;
+      font-size: 12px !important;
+      line-height: 1 !important;
+    }
+    #outlineControlGroup .color-select-row {
+      display: block !important;
+      min-width: 0 !important;
+    }
+    #outlineControlGroup .color-select-row input[type="color"] {
+      width: 100% !important;
+      height: 32px !important;
+      min-height: 32px !important;
+      padding: 2px !important;
+      border-radius: 0 !important;
+    }
+    #outlineControlGroup .outline-mode-options {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+      min-width: 0 !important;
+    }
+    #outlineControlGroup .outline-choice {
+      height: 32px !important;
+      min-height: 32px !important;
+      margin: 0 !important;
+      padding: 0 6px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 4px !important;
+      white-space: nowrap !important;
+      border: 1px solid rgba(108,136,166,.18) !important;
+      background: rgba(255,255,255,.72) !important;
+      color: var(--text) !important;
+      font-size: 11px !important;
+      border-radius: 0 !important;
+    }
+    #outlineControlGroup .outline-choice input {
+      margin: 0 !important;
+      flex: 0 0 auto !important;
+      transform: none !important;
+    }
+    #outlineControlGroup .outline-thickness-row .row {
+      grid-template-columns: minmax(0, 1fr) 44px !important;
+      gap: 6px !important;
+    }
+    #outlineControlGroup .outline-thickness-row .value {
+      height: 28px !important;
+      min-height: 28px !important;
+      padding: 4px 0 !important;
+      border-radius: 0 !important;
+      font-size: 12px !important;
+    }
+    #outlineControlGroup #outlineThickness {
+      height: 22px !important;
+      margin: 0 !important;
+    }
+    #outlineControlGroup .outline-apply-btn {
+      width: 100% !important;
+      height: 32px !important;
+      min-height: 32px !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+      font-size: 12px !important;
+    }
+    #outlineControlGroup .outline-mode-note {
+      font-size: 11px !important;
+      line-height: 1.25 !important;
+      margin: -2px 0 0 !important;
+      color: var(--muted) !important;
+    }
+    @media (max-width: 380px) {
+      #outlineControlGroup .outline-row {
+        grid-template-columns: 64px minmax(0, 1fr) !important;
+        gap: 6px !important;
+      }
+      #outlineControlGroup .outline-choice {
+        padding: 0 4px !important;
+        font-size: 10px !important;
+      }
+    }
+
+    .bg-cleanup-group .bg-cleanup-inline {
+      display: grid;
+      grid-template-columns: 68px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+    .bg-cleanup-group .bg-cleanup-inline label {
+      margin: 0 !important;
+      white-space: nowrap;
+    }
+    .bg-cleanup-group .bg-cleanup-inline select {
+      width: 100%;
+    }
     @media print {
       body { background: #fff; }
       header, .controls, .tabs, .editor-bottom-toolbar, .editor-tools-grid, .stats, #previewSection, #editorSection { display: none !important; }
@@ -2301,36 +2417,60 @@
             </div>
             <div class="tool-panel" data-panel="bg">
               <div class="tool-panel-title">去背景</div>
-              <div class="control-group">
-        <label>白色背景不放豆</label>
+              <div class="control-group bg-cleanup-group">
+        <label>背景不放豆</label>
         <label class="check-row">
           <input id="removeWhiteBg" type="checkbox" />
-          <span>生成图纸后，只清理与图纸最外圈连通的白色豆</span>
+          <span>生成图纸后，只清理与图纸最外圈连通的选中背景色</span>
         </label>
-        <div class="hint">不会参与颜色压缩或上色判断；会先按当前颜色模式完整生成图纸，再把边缘连通的白色背景豆设为空豆，主体内部白色不受影响。</div>
+        <div class="bg-cleanup-inline">
+          <label for="backgroundCleanupColor">背景颜色</label>
+          <select id="backgroundCleanupColor">
+            <option value="white" selected>白色</option>
+            <option value="black">黑色</option>
+            <option value="gray">灰色</option>
+            <option value="red">红色</option>
+            <option value="orange">橙色</option>
+            <option value="yellow">黄色</option>
+            <option value="green">绿色</option>
+            <option value="blue">蓝色</option>
+            <option value="purple">紫色</option>
+            <option value="pink">粉色</option>
+          </select>
+        </div>
+        <div class="hint">不会参与颜色压缩或上色判断；会先按当前颜色模式完整生成图纸，再把边缘连通的选中背景色豆设为空豆，主体内部同色区域不受影响。</div>
       </div>
             </div>
             <div class="tool-panel" data-panel="outline">
               <div class="tool-panel-title">描边</div>
-              <div id="outlineControlGroup" class="control-group">
-        <p class="small-title">描边</p>
-        <label>描边颜色</label>
-        <div class="color-select-row"><div id="outlineColorPreview" class="color-preview" hidden></div><select id="outlineColor" hidden></select><input id="outlineColorPicker" type="color" value="#000000" title="自由选色" /></div>
-
-        <label style="margin-top:12px;">描边模式</label>
-        <select id="outlineMode">
-          <option value="add">新增外描边（不覆盖原图）</option>
-          <option value="replace">替换最外层像素</option>
-        </select>
-
-        <label style="margin-top:12px;">描边厚度</label>
-        <div class="row">
-          <input id="outlineThickness" type="range" min="1" max="6" value="1" />
-          <div id="outlineThicknessValue" class="value">1</div>
+              <div id="outlineControlGroup" class="control-group outline-compact">
+        <div class="outline-row outline-color-row">
+          <label>描边颜色</label>
+          <div class="color-select-row"><div id="outlineColorPreview" class="color-preview" hidden></div><select id="outlineColor" hidden></select><input id="outlineColorPicker" type="color" value="#000000" title="自由选色" /></div>
         </div>
 
-        <button id="applyOutlineBtn" class="warn" style="margin-top:12px; width:100%;">应用描边</button>
-        <div class="hint">“新增外描边”会在图像外侧新增一圈或多圈描边，不会覆盖原有图案。<br>“替换最外层像素”会把当前图像最外圈像素改成描边色。</div>
+        <div class="outline-row outline-mode-row">
+          <label>描边模式</label>
+          <select id="outlineMode" hidden>
+            <option value="add">新增外描边（不覆盖原图）</option>
+            <option value="replace" selected>替换最外层像素</option>
+          </select>
+          <div class="outline-mode-options" role="radiogroup" aria-label="描边模式">
+            <label class="check-row outline-choice"><input id="outlineModeReplace" name="outlineModeChoice" type="radio" value="replace" checked /> <span>替换最外圈</span></label>
+            <label class="check-row outline-choice"><input id="outlineModeAdd" name="outlineModeChoice" type="radio" value="add" /> <span>新增外描边</span></label>
+          </div>
+        </div>
+
+        <div class="outline-row outline-thickness-row">
+          <label>描边厚度</label>
+          <div class="row">
+            <input id="outlineThickness" type="range" min="1" max="4" value="1" />
+            <div id="outlineThicknessValue" class="value">1</div>
+          </div>
+        </div>
+
+        <button id="applyOutlineBtn" class="warn outline-apply-btn">应用描边</button>
+        <div id="outlineModeNote" class="status-line outline-mode-note">替换模式：厚度从图案外侧向内计算。</div>
       </div>
             </div>
             <div class="tool-panel" data-panel="tone">
@@ -2634,12 +2774,29 @@
       const threshold = (BAYER_4[y % 4][x % 4] / 15 - 0.5) * amount;
       return [clamp(r + threshold, 0, 255), clamp(g + threshold, 0, 255), clamp(b + threshold, 0, 255)];
     }
-    function isNearWhiteColor(color) {
+    const BACKGROUND_COLOR_MATCHERS = {
+      white: (r, g, b) => r > 215 && g > 215 && b > 215,
+      black: (r, g, b) => r < 55 && g < 55 && b < 55,
+      gray: (r, g, b) => {
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        const avg = (r + g + b) / 3;
+        return max - min <= 28 && avg >= 55 && avg <= 220;
+      },
+      red: (r, g, b) => r >= 120 && r - g >= 28 && r - b >= 28,
+      orange: (r, g, b) => r >= 150 && g >= 80 && g <= 190 && b <= 130 && r > g,
+      yellow: (r, g, b) => r >= 150 && g >= 150 && b <= 135,
+      green: (r, g, b) => g >= 95 && g - r >= 15 && g - b >= 15,
+      blue: (r, g, b) => b >= 100 && b - r >= 10 && b - g >= 10,
+      purple: (r, g, b) => r >= 95 && b >= 95 && g <= 150,
+      pink: (r, g, b) => r >= 170 && b >= 120 && g >= 80 && r >= g,
+    };
+    function matchesBackgroundCleanupColor(color, mode = "white") {
       if (!color || color === "transparent") return false;
       const [r, g, b] = hexToRgb(color);
-      return r > WHITE_BG_THRESHOLD && g > WHITE_BG_THRESHOLD && b > WHITE_BG_THRESHOLD;
+      const matcher = BACKGROUND_COLOR_MATCHERS[mode] || BACKGROUND_COLOR_MATCHERS.white;
+      return matcher(r, g, b);
     }
-    function removeOuterWhiteBeadsAfterPattern(patternData, enabled) {
+    function removeOuterBackgroundBeadsAfterPattern(patternData, enabled, targetColorMode = "white") {
       if (!enabled || !patternData || !patternData.width || !patternData.height) return 0;
       const { width, height, palette, pixels } = patternData;
       const visited = new Uint8Array(width * height);
@@ -2650,7 +2807,7 @@
         const p = y * width + x;
         if (visited[p]) return;
         const index = pixels[y][x];
-        if (!index || !isNearWhiteColor(palette[index])) return;
+        if (!index || !matchesBackgroundCleanupColor(palette[index], targetColorMode)) return;
         visited[p] = 1;
         queue.push(p);
       }
@@ -2781,6 +2938,7 @@
       const palette = ["transparent"];
       const paletteMap = new Map([["transparent", 0]]);
       const removeWhiteBg = $("removeWhiteBg").checked;
+      const backgroundCleanupColor = $("backgroundCleanupColor")?.value || "white";
       const fixedPalette = buildPaletteFromMode(imageData, mode, colorCount, alphaThreshold);
 
       if (fixedPalette) {
@@ -2827,8 +2985,9 @@
           note: "pixels[y][x] is the palette index. palette[0] is transparent / no bead."
         }
       };
-      const removedWhiteBgBeads = removeOuterWhiteBeadsAfterPattern(patternData, removeWhiteBg);
-      patternData.meta.whiteBackgroundRemoval = removeWhiteBg ? "post-pattern-edge-connected-white-beads" : "off";
+      const removedWhiteBgBeads = removeOuterBackgroundBeadsAfterPattern(patternData, removeWhiteBg, backgroundCleanupColor);
+      patternData.meta.whiteBackgroundRemoval = removeWhiteBg ? `post-pattern-edge-connected-${backgroundCleanupColor}-beads` : "off";
+      patternData.meta.backgroundCleanupColor = backgroundCleanupColor;
       patternData.meta.removedWhiteBgBeads = removedWhiteBgBeads;
       return patternData;
     }
@@ -4216,7 +4375,7 @@
     function applyOutline() {
       if (!lastPatternData) return;
       const mode = $("outlineMode").value;
-      const thickness = clamp(parseInt($("outlineThickness").value, 10) || 1, 1, 6);
+      const thickness = clamp(parseInt($("outlineThickness").value, 10) || 1, 1, 4);
       const outlineColor = normalizeColor($("outlineColor").value);
       const outlineIndex = ensureColorInPalette(outlineColor);
 
@@ -4279,24 +4438,36 @@
     function applyReplaceOutline(outlineIndex, thickness) {
       const width = lastPatternData.width;
       const height = lastPatternData.height;
+      const visibleMask = Array.from({ length: height }, (_, y) =>
+        Array.from({ length: width }, (_, x) => isVisibleIndex(lastPatternData.pixels[y][x]))
+      );
+      const toReplaceSet = new Set();
+
       for (let step = 0; step < thickness; step++) {
-        const current = lastPatternData.pixels.map(row => row.slice());
-        const toReplace = [];
+        const layer = [];
         for (let y = 0; y < height; y++) {
           for (let x = 0; x < width; x++) {
-            const idx = current[y][x];
-            if (!isVisibleIndex(idx)) continue;
+            if (!visibleMask[y][x]) continue;
             let isBoundary = false;
             for (const [nx, ny] of getEightNeighbors(x, y)) {
-              if (nx < 0 || ny < 0 || nx >= width || ny >= height || current[ny][nx] === 0) {
+              if (nx < 0 || ny < 0 || nx >= width || ny >= height || !visibleMask[ny][nx]) {
                 isBoundary = true;
                 break;
               }
             }
-            if (isBoundary) toReplace.push([x, y]);
+            if (isBoundary) layer.push([x, y]);
           }
         }
-        for (const [x, y] of toReplace) lastPatternData.pixels[y][x] = outlineIndex;
+        if (!layer.length) break;
+        for (const [x, y] of layer) {
+          toReplaceSet.add(`${x},${y}`);
+          visibleMask[y][x] = false;
+        }
+      }
+
+      for (const key of toReplaceSet) {
+        const [x, y] = key.split(",").map(Number);
+        lastPatternData.pixels[y][x] = outlineIndex;
       }
     }
 
@@ -4808,7 +4979,7 @@
         if (sourceImage) generatePattern();
       });
     });
-    ["paletteMode", "ditherMode", "removeWhiteBg"].forEach(id => $(id).addEventListener("change", () => {
+    ["paletteMode", "ditherMode", "removeWhiteBg", "backgroundCleanupColor"].forEach(id => $(id).addEventListener("change", () => {
       if (sourceImage) generatePattern();
       else updateEditableColorSelectors();
     }));
@@ -5015,6 +5186,24 @@
     $("replaceColorBtn").addEventListener("click", replaceSelectedColor);
     $("cleanupPaletteBtn").addEventListener("click", () => { pushHistory(); cleanupPalette(true); });
     $("fillTransparentBtn").addEventListener("click", fillTransparent);
+    function syncOutlineModeUI(mode) {
+      mode = mode === "add" ? "add" : "replace";
+      const select = $("outlineMode");
+      if (select) select.value = mode;
+      const replaceRadio = $("outlineModeReplace");
+      const addRadio = $("outlineModeAdd");
+      if (replaceRadio) replaceRadio.checked = mode === "replace";
+      if (addRadio) addRadio.checked = mode === "add";
+      const note = $("outlineModeNote");
+      if (note) note.textContent = mode === "replace"
+        ? "替换模式：厚度从图案外侧向内计算。"
+        : "新增模式：描边会加在图案外侧，不覆盖原图。";
+    }
+    document.querySelectorAll('input[name="outlineModeChoice"]').forEach(radio => {
+      radio.addEventListener("change", () => { if (radio.checked) syncOutlineModeUI(radio.value); });
+    });
+    const outlineModeSelect = $("outlineMode");
+    if (outlineModeSelect) outlineModeSelect.addEventListener("change", () => syncOutlineModeUI(outlineModeSelect.value));
     $("outlineThickness").addEventListener("input", () => { $("outlineThicknessValue").textContent = $("outlineThickness").value; });
     $("applyOutlineBtn").addEventListener("click", applyOutline);
 
@@ -5119,6 +5308,7 @@
     $("beadWidthValue").textContent = $("beadWidth").value;
     $("customColorsValue").textContent = $("customColors").value;
     $("outlineThicknessValue").textContent = $("outlineThickness").value;
+    syncOutlineModeUI("replace");
     $("customColorGroup").style.display = $("paletteMode").value === "custom" ? "block" : "none";
     updateToneLabels();
     updateEditableColorSelectors();
