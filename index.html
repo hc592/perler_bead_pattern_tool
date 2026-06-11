@@ -3524,21 +3524,246 @@
       padding-bottom: max(0px, env(safe-area-inset-bottom)) !important;
     }
 
+
+
+    /* 本次修正：风格预设去掉外框，选中态不再额外高亮；同时压缩风格面板上方空白，把预览区下边缘下移 */
+    #appPage.app-work-page.active .control-panel-float.style-panel-compact,
+    .control-panel-float.style-panel-compact {
+      height: 62px !important;
+      min-height: 62px !important;
+      max-height: 62px !important;
+      padding: 4px 8px 3px !important;
+      overflow: hidden !important;
+    }
+    .control-panel-float.style-panel-compact .tool-panel[data-panel="style"].active,
+    .control-panel-float.style-panel-compact .style-panel-grid,
+    .control-panel-float.style-panel-compact .style-control-group {
+      height: auto !important;
+      min-height: 0 !important;
+      display: grid !important;
+      align-content: center !important;
+      gap: 0 !important;
+    }
+    .control-panel-float.style-panel-compact .style-preset-strip,
+    .control-dock .style-preset-strip {
+      padding: 0 !important;
+      margin: 0 !important;
+      align-items: center !important;
+      gap: 10px !important;
+    }
+    .style-preset-btn,
+    .style-preset-btn.active,
+    .style-preset-btn:hover,
+    .style-preset-btn:focus,
+    .style-preset-btn:active,
+    .control-dock .style-preset-btn,
+    .control-dock .style-preset-btn.active,
+    .control-dock .style-preset-btn:hover,
+    .control-dock .style-preset-btn:focus,
+    .control-dock .style-preset-btn:active {
+      border: 0 !important;
+      outline: 0 !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      color: var(--text) !important;
+      transform: none !important;
+      filter: none !important;
+      border-radius: 0 !important;
+    }
+    .style-preset-btn,
+    .control-dock .style-preset-btn {
+      width: 78px !important;
+      min-width: 78px !important;
+      height: 52px !important;
+      min-height: 52px !important;
+      padding: 4px 3px 2px !important;
+      grid-template-rows: 20px auto !important;
+      gap: 2px !important;
+    }
+    .style-preset-btn.active::after {
+      content: none !important;
+      display: none !important;
+    }
+    @media (max-width: 420px), (max-height: 760px) {
+      #appPage.app-work-page.active .control-panel-float.style-panel-compact,
+      .control-panel-float.style-panel-compact {
+        height: 58px !important;
+        min-height: 58px !important;
+        max-height: 58px !important;
+        padding: 3px 6px 2px !important;
+      }
+      .style-preset-btn,
+      .control-dock .style-preset-btn {
+        width: 72px !important;
+        min-width: 72px !important;
+        height: 50px !important;
+        min-height: 50px !important;
+        padding: 3px 2px 2px !important;
+        grid-template-rows: 18px auto !important;
+      }
+      .control-panel-float.style-panel-compact .style-preset-strip,
+      .control-dock .style-preset-strip {
+        gap: 8px !important;
+      }
+    }
+
+
+    /* 本次调整：默认色数改为 24；风格选中态改成和底部工具栏一致的浅灰选中块 */
+    .style-preset-btn,
+    .control-dock .style-preset-btn {
+      position: relative !important;
+      overflow: hidden !important;
+      border-radius: 10px !important;
+    }
+    .style-preset-btn.active,
+    .control-dock .style-preset-btn.active {
+      background: transparent !important;
+      color: var(--text) !important;
+    }
+    .style-preset-btn.active::after,
+    .control-dock .style-preset-btn.active::after {
+      content: "" !important;
+      display: block !important;
+      position: absolute !important;
+      inset: 0 !important;
+      border-radius: 10px !important;
+      background: rgba(108, 136, 166, .16) !important;
+      z-index: 0 !important;
+      pointer-events: none !important;
+    }
+    .style-preset-btn > *,
+    .control-dock .style-preset-btn > * {
+      position: relative !important;
+      z-index: 1 !important;
+    }
 </style>
+
+
+  <style id="slider-progress-zero-fix">
+    /* 本次调整：滑条恢复轻量实心进度；调色滑条增加中间 0 点标记 */
+    input[type="range"] {
+      --range-track-bg: linear-gradient(to right,
+        rgba(78, 162, 245, .44) 0%,
+        rgba(78, 162, 245, .44) var(--range-progress, 0%),
+        rgba(108, 136, 166, .24) var(--range-progress, 0%),
+        rgba(108, 136, 166, .24) 100%);
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 3px !important;
+      background: var(--range-track-bg) !important;
+      border-radius: 999px !important;
+    }
+    input[type="range"]::-moz-range-track {
+      height: 3px !important;
+      background: var(--range-track-bg) !important;
+      border-radius: 999px !important;
+    }
+    input[type="range"]::-moz-range-progress {
+      background: transparent !important;
+    }
+    .tool-panel[data-panel="tone"] .tone-slider-card {
+      position: relative !important;
+    }
+    .tool-panel[data-panel="tone"] .tone-slider-card input[type="range"] {
+      position: relative !important;
+      z-index: 2 !important;
+    }
+    .tool-panel[data-panel="tone"] .tone-zero-marker {
+      grid-area: toneRange !important;
+      justify-self: center !important;
+      align-self: center !important;
+      width: 6px !important;
+      height: 6px !important;
+      border-radius: 50% !important;
+      background: rgba(78, 162, 245, .62) !important;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, .88) !important;
+      pointer-events: none !important;
+      z-index: 3 !important;
+    }
+
+
+    /* 本次调整：首页标题改为 resource/1.jpg 图片 */
+    .image-title {
+      margin: 0 0 10px !important;
+      padding: 0 !important;
+      line-height: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 100% !important;
+    }
+    .image-title .title-logo {
+      display: block !important;
+      width: min(100%, 360px) !important;
+      max-height: 96px !important;
+      object-fit: contain !important;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+    @media (max-width: 420px), (max-height: 760px) {
+      .image-title {
+        margin-bottom: 8px !important;
+      }
+      .image-title .title-logo {
+        width: min(100%, 320px) !important;
+        max-height: 82px !important;
+      }
+    }
+
+
+    /* 本次调整：标题图片自动铺满网页顶端 */
+    .home-page > header {
+      padding: 0 0 6px !important;
+      margin: 0 !important;
+      max-width: none !important;
+      width: 100% !important;
+    }
+    .home-page .image-title {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      display: block !important;
+      line-height: 0 !important;
+    }
+    .home-page .image-title .title-logo {
+      display: block !important;
+      width: 100% !important;
+      max-width: none !important;
+      height: auto !important;
+      max-height: none !important;
+      object-fit: contain !important;
+      object-position: center top !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    .home-page > header .subtitle {
+      padding: 10px 12px 0 !important;
+    }
+    @media (max-width: 420px), (max-height: 760px) {
+      .home-page > header {
+        padding-top: 0 !important;
+      }
+      .home-page .image-title {
+        margin-bottom: 0 !important;
+      }
+      .home-page .image-title .title-logo {
+        width: 100% !important;
+        max-height: none !important;
+      }
+    }
+
+
+  </style>
+
 </head>
 <body>
   <div class="mobile-shell">
     <div id="homePage" class="app-page home-page active">
       <header>
-    <h1 class="pixel-title" aria-label="拼豆图纸生成工具">
-      <span class="char c1">拼</span>
-      <span class="char c2">豆</span>
-      <span class="char c3">图</span>
-      <span class="char c4">纸</span>
-      <span class="char c5">生</span>
-      <span class="char c6">成</span>
-      <span class="char c7">工</span>
-      <span class="char c8">具</span>
+    <h1 class="image-title" aria-label="拼豆图纸生成工具">
+      <img class="title-logo" src="resource/1.jpg" alt="拼豆图纸生成工具" />
     </h1>
     <div class="subtitle">
       上传图片后自动转换为拼豆图纸：圆珠预览、格子编号、颜色用量统计、编辑修补、图纸导出预览、导出 PNG / SVG / 材料清单。所有处理都在浏览器本地完成。
@@ -3634,8 +3859,8 @@
         </select>
         <label>色数</label>
         <div class="row">
-          <input id="customColors" type="range" min="2" max="128" value="64" />
-          <div id="customColorsValue" class="value">64</div>
+          <input id="customColors" type="range" min="2" max="128" value="24" />
+          <div id="customColorsValue" class="value">24</div>
         </div>
       </div>
               </div>
@@ -7221,5 +7446,93 @@
     })();
 
 </script>
+
+
+<script id="slider-progress-zero-fix-script">
+  (function () {
+    const TRACK_FILL = "rgba(78, 162, 245, .44)";
+    const TRACK_BASE = "rgba(108, 136, 166, .24)";
+
+    function clampPercent(value) {
+      return Math.max(0, Math.min(100, value));
+    }
+
+    function isToneRange(range) {
+      return !!(range && range.closest && range.closest('.tool-panel[data-panel="tone"]'));
+    }
+
+    function getRangePercent(range) {
+      const min = Number.parseFloat(range.min || "0");
+      const max = Number.parseFloat(range.max || "100");
+      const value = Number.parseFloat(range.value || "0");
+      if (!Number.isFinite(min) || !Number.isFinite(max) || max === min) return 0;
+      return clampPercent(((value - min) / (max - min)) * 100);
+    }
+
+    function setRangeProgress(range) {
+      if (!range || range.type !== "range") return;
+      const min = Number.parseFloat(range.min || "0");
+      const max = Number.parseFloat(range.max || "100");
+      const valuePct = getRangePercent(range);
+      range.style.setProperty("--range-progress", valuePct.toFixed(3) + "%");
+
+      if (isToneRange(range) && Number.isFinite(min) && Number.isFinite(max) && min < 0 && max > 0) {
+        const zeroPct = clampPercent(((0 - min) / (max - min)) * 100);
+        const start = Math.min(valuePct, zeroPct).toFixed(3);
+        const end = Math.max(valuePct, zeroPct).toFixed(3);
+        range.style.setProperty(
+          "--range-track-bg",
+          `linear-gradient(to right, ${TRACK_BASE} 0%, ${TRACK_BASE} ${start}%, ${TRACK_FILL} ${start}%, ${TRACK_FILL} ${end}%, ${TRACK_BASE} ${end}%, ${TRACK_BASE} 100%)`
+        );
+      } else {
+        const pct = valuePct.toFixed(3);
+        range.style.setProperty(
+          "--range-track-bg",
+          `linear-gradient(to right, ${TRACK_FILL} 0%, ${TRACK_FILL} ${pct}%, ${TRACK_BASE} ${pct}%, ${TRACK_BASE} 100%)`
+        );
+      }
+    }
+
+    function ensureToneZeroMarkers() {
+      document.querySelectorAll('.tool-panel[data-panel="tone"] .tone-slider-card input[type="range"]').forEach(range => {
+        const min = Number.parseFloat(range.min || "0");
+        const max = Number.parseFloat(range.max || "100");
+        if (!(Number.isFinite(min) && Number.isFinite(max) && min < 0 && max > 0)) return;
+        const card = range.closest('.tone-slider-card');
+        if (!card || card.querySelector(':scope > .tone-zero-marker')) return;
+        const marker = document.createElement('span');
+        marker.className = 'tone-zero-marker';
+        marker.setAttribute('aria-hidden', 'true');
+        range.insertAdjacentElement('afterend', marker);
+      });
+    }
+
+    function syncAllRangeProgress() {
+      ensureToneZeroMarkers();
+      document.querySelectorAll('input[type="range"]').forEach(setRangeProgress);
+    }
+
+    document.addEventListener('input', evt => {
+      if (evt.target && evt.target.matches && evt.target.matches('input[type="range"]')) {
+        setRangeProgress(evt.target);
+      }
+    }, true);
+
+    document.addEventListener('change', evt => {
+      if (evt.target && evt.target.matches && evt.target.matches('input[type="range"]')) {
+        setRangeProgress(evt.target);
+      }
+    }, true);
+
+    document.addEventListener('click', () => {
+      requestAnimationFrame(syncAllRangeProgress);
+    }, true);
+
+    window.addEventListener('resize', () => requestAnimationFrame(syncAllRangeProgress));
+    syncAllRangeProgress();
+    requestAnimationFrame(syncAllRangeProgress);
+  })();
+</script>
+
 </body>
 </html>
