@@ -4939,6 +4939,19 @@
       patternOverlay.style.height = `${displayH}px`;
       patternOverlay.style.opacity = "0";
       patternOverlay.style.backgroundImage = "none";
+      updatePreviewStageCentering();
+    }
+    function updatePreviewStageCentering() {
+      if (!patternWrap || !patternStage || !patternCanvas) return;
+      const viewport = getPatternWrapViewportSize();
+      const displayW = Math.max(1, getCanvasBaseWidth(patternCanvas) * previewZoom);
+      const displayH = Math.max(1, getCanvasBaseHeight(patternCanvas) * previewZoom);
+      const offsetX = Math.max(0, Math.floor((viewport.width - displayW) / 2));
+      const offsetY = Math.max(0, Math.floor((viewport.height - displayH) / 2));
+      patternStage.style.setProperty('margin-left', `${offsetX}px`, 'important');
+      patternStage.style.setProperty('margin-right', `${offsetX}px`, 'important');
+      patternStage.style.setProperty('margin-top', `${offsetY}px`, 'important');
+      patternStage.style.setProperty('margin-bottom', `${offsetY}px`, 'important');
     }
     function lockPreviewButtonFrameToDefaultSize() {
       if (!patternWrap || !patternCanvas) return;
@@ -7367,6 +7380,7 @@
 
       const wrapRect = wrap.getBoundingClientRect();
       const viewport = getPatternWrapViewportSize();
+      updatePreviewStageCentering();
       return {
         width: Math.max(180, Math.round(viewport.width || wrapRect.width || wrap.clientWidth || 320)),
         height: Math.max(118, Math.round(viewport.height || frameH))
