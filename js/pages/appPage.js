@@ -819,6 +819,7 @@ const $ = (id) => document.getElementById(id);
       patternOverlay.style.height = `${displayH}px`;
       patternOverlay.style.opacity = "0";
       patternOverlay.style.backgroundImage = "none";
+      syncPatternStageCentering();
     }
     function legacyLockPreviewButtonFrameToDefaultSize() {
       if (!patternWrap || !patternCanvas) return;
@@ -847,6 +848,32 @@ const $ = (id) => document.getElementById(id);
         left: (patternStage ? patternStage.offsetLeft : 0) + (patternCanvas ? patternCanvas.offsetLeft : 0),
         top: (patternStage ? patternStage.offsetTop : 0) + (patternCanvas ? patternCanvas.offsetTop : 0)
       };
+    }
+    function syncPatternStageCentering() {
+      if (!patternWrap || !patternStage) return;
+      const displayH = Math.max(1, parseFloat(patternStage.style.height || "0") || getCanvasBaseHeight(patternCanvas) * previewZoom);
+      const spareH = Math.max(0, (patternWrap.clientHeight || 0) - displayH);
+      const verticalGap = Math.floor(spareH / 2);
+
+      // CSS 里有若干处使用了 margin: 0 auto !important。
+      // 普通的 inline marginTop 会被它压住，导致手机端看起来永远贴着顶部。
+      // 这里必须用 setProperty(..., "important") 强制接管居中间距。
+      const bottomGap = Math.max(0, spareH - verticalGap);
+      patternStage.style.setProperty("--pattern-stage-margin-top", `${verticalGap}px`);
+      patternStage.style.setProperty("--pattern-stage-margin-bottom", `${bottomGap}px`);
+      patternStage.style.setProperty("margin-left", "auto", "important");
+      patternStage.style.setProperty("margin-right", "auto", "important");
+      patternStage.style.setProperty("margin-top", `${verticalGap}px`, "important");
+      patternStage.style.setProperty("margin-bottom", `${bottomGap}px`, "important");
+    }
+    function centerPreviewScroll() {
+      if (!patternWrap || !patternCanvas) return;
+      syncPatternStageCentering();
+      const contentOffset = getPatternContentOffset();
+      const scaledW = Math.max(1, getCanvasBaseWidth(patternCanvas) * previewZoom);
+      const scaledH = Math.max(1, getCanvasBaseHeight(patternCanvas) * previewZoom);
+      patternWrap.scrollLeft = Math.max(0, contentOffset.left + scaledW / 2 - (patternWrap.clientWidth || 0) / 2);
+      patternWrap.scrollTop = Math.max(0, contentOffset.top + scaledH / 2 - (patternWrap.clientHeight || 0) / 2);
     }
     function legacyFitPreviewZoomToOriginalSize() {
       if (!lastPatternData || !sourceImage) return;
@@ -936,6 +963,7 @@ const $ = (id) => document.getElementById(id);
       }
 
       previewZoom = newZoom;
+      userAdjustedZoom = true;
       applyPreviewZoom();
       updateOperationCursorOverlay();
       if (anchor) {
@@ -1185,6 +1213,10 @@ const $ = (id) => document.getElementById(id);
       hasPendingPatternEdits = false;
       selectedPaletteIndex = null;
       selectedSeed = null;
+      fillEmptyModeActive = false;
+      operationControlsActive = false;
+      activeTool = "paint";
+      previewEditModeActive = false;
       previewZoom = 1;
       initialPreviewZoom = 1;
       clearTimeout(previewRedrawTimer);
@@ -1195,6 +1227,10 @@ const $ = (id) => document.getElementById(id);
       userAdjustedZoom = false;
       rememberSafeInvalidatingControlValues();
       setButtonsEnabled(true);
+      setTool("paint");
+      setPreviewEditMode(false);
+      updateFillEmptyModeUI();
+      updateOperationControlsUI();
       let renderOk = true;
       try {
         refreshAllViews();
@@ -2880,7 +2916,11 @@ const $ = (id) => document.getElementById(id);
       cancelAnimationFrame(responsivePreviewLayoutRaf);
       responsivePreviewLayoutRaf = requestAnimationFrame(() => {
         updateResponsivePreviewLayout();
-        if (refit && lastPatternData) fitPreviewZoomToOriginalSize();
+        if (refit && lastPatternData && !userAdjustedZoom) {
+          fitPreviewZoomToOriginalSize();
+        } else if (lastPatternData) {
+          syncPatternStageCentering();
+        }
       });
     }
 
@@ -2897,42 +2937,28 @@ const $ = (id) => document.getElementById(id);
       const renderOptions = getPreviewRenderOptions();
       const baseW = Math.max(1, lastPatternData.width * renderOptions.cell + renderOptions.margin * 2);
       const baseH = Math.max(1, lastPatternData.height * renderOptions.cell + renderOptions.margin * 2);
-      const isPortrait = baseH > baseW;
-      const targetZoom = isPortrait
-        ? viewportSize.height / baseH
-        : viewportSize.width / baseW;
+      const targetZoom = Math.min(viewportSize.width / baseW, viewportSize.height / baseH);
 
       previewZoom = clamp(targetZoom, MIN_PREVIEW_ZOOM, MAX_PREVIEW_ZOOM);
       initialPreviewZoom = previewZoom;
+      userAdjustedZoom = false;
       drawPreviewPattern();
       updateResponsivePreviewLayout();
+      syncPatternStageCentering();
 
-      requestAnimationFrame(() => {
-        const contentOffset = getPatternContentOffset();
-        const scaledW = baseW * previewZoom;
-        const scaledH = baseH * previewZoom;
-        patternWrap.scrollLeft = 0;
-        patternWrap.scrollTop = 0;
-
-        if (scaledW < patternWrap.clientWidth) {
-          patternWrap.scrollLeft = Math.max(0, contentOffset.left - (patternWrap.clientWidth - scaledW) / 2);
-        }
-        if (scaledH < patternWrap.clientHeight) {
-          patternWrap.scrollTop = Math.max(0, contentOffset.top - (patternWrap.clientHeight - scaledH) / 2);
-        }
-      });
+      requestAnimationFrame(centerPreviewScroll);
       updatePatternInfo();
     }
 
     (function bindResponsivePreviewLayoutFix() {
       syncWorkModeShellClass();
       document.querySelectorAll(".tool-tab").forEach(btn => {
-        btn.addEventListener("click", () => scheduleResponsivePreviewLayout(true));
+        btn.addEventListener("click", () => scheduleResponsivePreviewLayout(false));
       });
       ["appPage", "homePage", "exportPage", "myPatternsPage"].forEach(id => {
         const page = $(id);
         if (!page || !window.MutationObserver) return;
-        new MutationObserver(() => scheduleResponsivePreviewLayout(!!lastPatternData)).observe(page, { attributes: true, attributeFilter: ["class"] });
+        new MutationObserver(() => scheduleResponsivePreviewLayout(false)).observe(page, { attributes: true, attributeFilter: ["class"] });
       });
       if (window.ResizeObserver) {
         const ro = new ResizeObserver(() => scheduleResponsivePreviewLayout(false));
@@ -3101,6 +3127,8 @@ function createContext(router) {
     confirmImageReplacement,
     setButtonsEnabled,
     fitPreviewZoomToOriginalSize,
+    keepPreviewLayout() { scheduleResponsivePreviewLayout(false); },
+    hasUserAdjustedPreviewZoom() { return !!userAdjustedZoom; },
     updateExportSection,
     initSliderProgressZeroFix
   };
@@ -3297,7 +3325,8 @@ function init(ctx) {
       });
       if (name === "draw") {
         if (fillEmptyModeActive) setFillEmptyMode(false);
-        setTool(activeTool || "paint");
+        // 进入“绘制”面板时默认保持画笔/橡皮，不自动进入取色；只有点取色笔才切换为取色。
+        setTool(activeTool === "erase" ? "erase" : "paint");
         if (lastPatternData) setPreviewEditMode(true);
       } else if (name === "same") {
         if (lastPatternData) {
@@ -3309,6 +3338,7 @@ function init(ctx) {
         if (operationControlsActive) setOperationControlsActive(false);
         if (fillEmptyModeActive) setFillEmptyMode(false);
       }
+      scheduleResponsivePreviewLayout(false);
     }
     document.querySelectorAll(".tool-tab").forEach(btn => {
       btn.addEventListener("click", () => setActiveToolPanel(btn.dataset.tool));
@@ -3342,7 +3372,11 @@ function init(ctx) {
     if (previewEditModeBtn) previewEditModeBtn.addEventListener("click", () => setPreviewEditMode(!previewEditModeActive));
     $("toolPaint").addEventListener("click", () => setTool("paint"));
     $("toolErase").addEventListener("click", () => setTool("erase"));
-    $("toolPick").addEventListener("click", () => setTool("pick"));
+    $("toolPick").addEventListener("click", () => {
+      if (lastPatternData) setPreviewEditMode(true);
+      setTool("pick");
+      showToast("已进入取色状态，请点击图纸中的颜色");
+    });
     const operationToggleBtn = $("operationToggleBtn");
     if (operationToggleBtn) operationToggleBtn.addEventListener("click", toggleOperationControls);
     [["operationMoveUpBtn", 0, -1], ["operationMoveLeftBtn", -1, 0], ["operationMoveRightBtn", 1, 0], ["operationMoveDownBtn", 0, 1]].forEach(([id, dx, dy]) => {
@@ -3568,7 +3602,10 @@ function init(ctx) {
       if (isDrawing) { isDrawing = false; lastPaintKey = ""; cleanupPalette(false); refreshAllViews(); }
     });
     window.addEventListener("blur", () => setOriginalCompareActive(false));
-    window.addEventListener("resize", () => { if (lastPatternData) fitPreviewZoomToOriginalSize(); });
+    window.addEventListener("resize", () => {
+      if (lastPatternData) scheduleResponsivePreviewLayout(!userAdjustedZoom);
+      else updateResponsivePreviewLayout();
+    });
     window.addEventListener("keydown", evt => {
       const isTyping = evt.target && ["TEXTAREA", "INPUT", "SELECT"].includes(evt.target.tagName);
       if ((evt.ctrlKey || evt.metaKey) && ["+", "=", "-", "0"].includes(evt.key) && previewEditModeActive) {

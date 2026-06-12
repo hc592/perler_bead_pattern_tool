@@ -1524,7 +1524,10 @@
       max-height: 72vh !important;
     }
     #previewSection #patternStage {
-      margin: 0 auto !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      margin-top: var(--pattern-stage-margin-top, 0px) !important;
+      margin-bottom: var(--pattern-stage-margin-bottom, 0px) !important;
     }
     #previewSection .preview-bottom-toolbar,
     #previewSection #previewOpacityPanel {
@@ -3244,7 +3247,10 @@
     }
     #appPage.app-work-page.active #previewSection #patternStage,
     #previewSection #patternStage {
-      margin: 0 auto !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      margin-top: var(--pattern-stage-margin-top, 0px) !important;
+      margin-bottom: var(--pattern-stage-margin-bottom, 0px) !important;
     }
     #previewSection .preview-bottom-toolbar {
       position: absolute !important;
@@ -3877,3 +3883,12 @@
         font-size: 11px !important;
       }
     }
+
+/* 修正：手机预览图纸默认居中。上下间距由 appPage.js 动态写入，避免旧样式把图纸压回顶部。 */
+#appPage.app-work-page.active #previewSection #patternStage,
+#previewSection #patternStage {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-top: var(--pattern-stage-margin-top, 0px) !important;
+  margin-bottom: var(--pattern-stage-margin-bottom, 0px) !important;
+}

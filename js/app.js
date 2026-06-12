@@ -28,7 +28,7 @@
         if (!lastPatternData) return;
         context.switchTab('preview');
         requestAnimationFrame(() => {
-          context.fitPreviewZoomToOriginalSize();
+          context.keepPreviewLayout && context.keepPreviewLayout();
         });
       },
       exportPage() {
