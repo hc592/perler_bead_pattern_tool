@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>拼豆图纸生成工具</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="mobile-shell">
+    <div id="homePage" class="app-page home-page active">
+      <header>
+    <h1 class="image-title" aria-label="拼豆图纸生成工具">
+      <img class="title-logo" src="resource/1.jpg" alt="拼豆图纸生成工具" />
+    </h1>
+  </header>
+      <main class="home-main">
+        <section class="home-card">
+          <button id="startGenerateBtn" class="home-big-btn">生成图纸</button>
+          <button id="myPatternsBtn" class="home-big-btn secondary">我的图纸</button>
+        </section>
+      </main>
+    </div>
+
+    <input id="fileInput" class="hidden-file-input" type="file" accept="image/*" />
+
+    <div id="myPatternsPage" class="app-page my-patterns-page">
+      <div class="page-topbar">
+        <button id="myPatternsBackBtn" class="secondary back-btn">←</button>
+        <div class="page-title">我的图纸</div>
+      </div>
+      <main class="my-patterns-main">
+        <section class="panel empty-card">
+          <div class="empty-icon">📁</div>
+          <div class="empty-title">暂无已保存图纸</div>
+          <div class="hint">当前版本先保留入口，之后可以继续接入本地保存、历史图纸和重新编辑功能。</div>
+        </section>
+      </main>
+    </div>
+
+    <div id="appPage" class="app-page app-work-page">
+      <div class="app-nav compact-nav-with-stats">
+        <button id="backHomeFromAppBtn" class="nav-arrow-only" aria-label="返回" title="返回">←</button>
+        <div class="stats compact-top-stats">
+          <div class="stat"><div id="statSize" class="num">-</div><div class="name">图纸尺寸</div></div>
+          <div class="stat"><div id="statColors" class="num">-</div><div class="name">颜色数量</div></div>
+          <div class="stat"><div id="statBeads" class="num">-</div><div class="name">总豆数</div></div>
+        </div>
+        <button id="openExportPageBtn" class="secondary">导出</button>
+      </div>
+
+      <main>
+        <section class="panel workspace preview-workspace-fulltop">
+      <section id="previewSection" class="tab-section active">
+        <div class="editor-layout">
+          <div class="canvas-card">
+            
+            <div id="patternWrap" class="canvas-wrap editor-wrap pattern-wrap">
+              <div id="patternStage" class="editor-stage">
+                <canvas id="patternCanvas"></canvas>
+                <canvas id="patternReferenceCanvas"></canvas>
+                <div id="patternOverlay"></div>
+                <div id="operationCursorBox" aria-hidden="true"></div>
+              </div>
+            </div>
+            <div id="operationPad" class="operation-pad" aria-hidden="true">
+              <button id="operationMoveUpBtn" class="operation-pad-btn operation-pad-up" type="button" aria-label="上移">↑</button>
+              <button id="operationMoveLeftBtn" class="operation-pad-btn operation-pad-left" type="button" aria-label="左移">←</button>
+              <button id="operationApplyBtn" class="operation-pad-btn operation-pad-center" type="button" aria-label="执行绘制或擦除">●</button>
+              <button id="operationMoveRightBtn" class="operation-pad-btn operation-pad-right" type="button" aria-label="右移">→</button>
+              <button id="operationMoveDownBtn" class="operation-pad-btn operation-pad-down" type="button" aria-label="下移">↓</button>
+            </div>
+            <div class="editor-bottom-toolbar preview-bottom-toolbar">
+              <div class="preview-toolbar-left">
+                <button id="previewUndoBtn" class="secondary nav-btn" title="上一步">←</button>
+                <button id="previewRedoBtn" class="secondary nav-btn" title="下一步">→</button>
+              </div>
+              <div class="preview-toolbar-right">
+                <button id="previewCompareOriginalBtn" class="secondary text-btn" title="按住查看原图">原图对比</button>
+              </div>
+              <button id="previewToggleOriginalBaseBtn" class="secondary text-btn preview-hidden-base-btn" title="切换原图打底" aria-hidden="true" tabindex="-1">原图打底</button>
+            </div>
+            <div id="previewOpacityPanel" class="editor-opacity-panel preview-opacity-panel-hidden" aria-hidden="true"></div>
+            <div class="hidden-original-buffer" aria-hidden="true">
+              <span id="originalInfo">未选择图片</span>
+              <canvas id="originalCanvas"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </section>
+
+        <section class="panel controls control-dock">
+          <div class="control-panel-float" aria-live="polite">
+            <div class="tool-panel active" data-panel="spec">
+              <div class="tool-panel-title">规格</div>
+              <div class="tool-panel-grid two-cols">
+                <div class="control-group">
+        <label>图纸宽度 / 横向豆数</label>
+        <div class="row">
+          <input id="beadWidth" type="range" min="8" max="160" value="80" />
+          <div id="beadWidthValue" class="value">80</div>
+        </div>
+        <div class="hint">高度会按原图比例自动计算。豆数越大，细节越多，但实际拼装也越费豆。</div>
+      </div>
+                <div class="control-group" id="customColorGroup">
+        <select id="paletteMode" hidden>
+          <option value="custom" selected>自动压缩为指定色数</option>
+        </select>
+        <label>色数</label>
+        <div class="row">
+          <input id="customColors" type="range" min="2" max="128" value="24" />
+          <div id="customColorsValue" class="value">24</div>
+        </div>
+      </div>
+              </div>
+            </div>
+            <div class="tool-panel" data-panel="display">
+              <div class="tool-panel-title">显示</div>
+              <div class="control-group">
+        <label>图纸显示</label>
+        <div class="row-2">
+          <select id="renderMode">
+            <option value="beads">圆珠图纸</option>
+            <option value="squares" selected>方格图纸</option>
+          </select>
+          <select id="labelMode">
+            <option value="number">颜色编号</option>
+            <option value="symbol">符号标记</option>
+            <option value="none">不显示文字</option>
+          </select>
+        </div>
+        <div class="row-2 grid-select-row">
+          <select id="gridLineMode" aria-label="网格线">
+            <option value="black" selected>黑网格线</option>
+            <option value="white">白网格线</option>
+            <option value="none">无网格线</option>
+          </select>
+          <select id="coordGuideMode" aria-label="辅助线">
+            <option value="5">每 5 格显示坐标辅助线</option>
+            <option value="10">每 10 格显示坐标辅助线</option>
+            <option value="none" selected>不显示辅助线</option>
+          </select>
+        </div>
+        <label class="check-row"><input id="showOriginalBaseInline" type="checkbox" /> <span>原图打底</span></label>
+        <div id="patternOpacityInline" class="pattern-opacity-inline">
+          <label style="margin-top:10px;">拼豆图纸透明度</label>
+          <div class="row">
+            <input id="previewPatternOpacityRange" type="range" min="0" max="100" value="15" />
+            <div id="previewPatternOpacityValue" class="value">15</div>
+          </div>
+        </div>
+      </div>
+            </div>
+            <div class="tool-panel" data-panel="bg">
+              <div class="tool-panel-title">去背景</div>
+              <div class="control-group bg-cleanup-group">
+        <label>背景不放豆</label>
+        <label class="check-row">
+          <input id="removeWhiteBg" type="checkbox" />
+          <span>生成图纸后，只清理与图纸最外圈连通的选中背景色</span>
+        </label>
+        <div class="bg-cleanup-inline">
+          <label for="backgroundCleanupColor">背景颜色</label>
+          <select id="backgroundCleanupColor">
+            <option value="white" selected>白色</option>
+            <option value="black">黑色</option>
+            <option value="gray">灰色</option>
+            <option value="red">红色</option>
+            <option value="orange">橙色</option>
+            <option value="yellow">黄色</option>
+            <option value="green">绿色</option>
+            <option value="blue">蓝色</option>
+            <option value="purple">紫色</option>
+            <option value="pink">粉色</option>
+          </select>
+        </div>
+        <div class="hint">不会参与颜色压缩或上色判断；会先按当前颜色模式完整生成图纸，再把边缘连通的选中背景色豆设为空豆，主体内部同色区域不受影响。</div>
+      </div>
+            </div>
+            <div class="tool-panel" data-panel="outline">
+              <div class="tool-panel-title">描边</div>
+              <div id="outlineControlGroup" class="control-group outline-compact">
+        <div class="outline-top-row">
+          <div class="outline-inline-item outline-color-row">
+            <label>描边颜色</label>
+            <div class="color-select-row"><div id="outlineColorPreview" class="color-preview" hidden></div><select id="outlineColor" hidden></select><input id="outlineColorPicker" type="color" value="#000000" title="自由选色" /></div>
+          </div>
+          <div class="outline-inline-item outline-mode-row">
+            <label>描边模式</label>
+            <select id="outlineMode">
+              <option value="replace" selected>替换最外圈</option>
+              <option value="add">新增外描边</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="outline-bottom-row">
+          <div class="outline-row outline-thickness-row">
+            <label>描边厚度</label>
+            <div class="row">
+              <input id="outlineThickness" type="range" min="1" max="4" value="1" />
+              <div id="outlineThicknessValue" class="value">1</div>
+            </div>
+          </div>
+          <button id="applyOutlineBtn" class="warn outline-apply-btn">应用描边</button>
+        </div>
+      </div>
+            </div>
+            <div class="tool-panel" data-panel="style">
+              <div class="tool-panel-title">风格</div>
+              <div class="tool-panel-grid style-panel-grid">
+                <div id="styleControlGroup" class="control-group style-control-group">
+                  <div class="style-preset-strip" role="list" aria-label="色彩风格预设">
+                    <button class="style-preset-btn" type="button" data-style-preset="original" aria-pressed="true"><span class="style-preset-icon" style="--s1:#f7f7f7;--s2:#d6e1ec;--s3:#4ea2f5;"></span><span>原图</span></button>
+                    <button class="style-preset-btn" type="button" data-style-preset="classic" aria-pressed="false"><span class="style-preset-icon" style="--s1:#ff5a6f;--s2:#ffd93d;--s3:#33a76f;"></span><span>经典鲜艳</span></button>
+                    <button class="style-preset-btn" type="button" data-style-preset="candy" aria-pressed="false"><span class="style-preset-icon" style="--s1:#ff66c4;--s2:#ffd86b;--s3:#69d2ff;"></span><span>糖果亮色</span></button>
+                    <button class="style-preset-btn" type="button" data-style-preset="pastel" aria-pressed="false"><span class="style-preset-icon" style="--s1:#ffc8dd;--s2:#cdb4db;--s3:#bde0fe;"></span><span>马卡龙</span></button>
+                    <button class="style-preset-btn" type="button" data-style-preset="retro" aria-pressed="false"><span class="style-preset-icon" style="--s1:#7a4b2a;--s2:#d4a373;--s3:#6b705c;"></span><span>复古像素</span></button>
+                    <button class="style-preset-btn" type="button" data-style-preset="contrast" aria-pressed="false"><span class="style-preset-icon" style="--s1:#161616;--s2:#ffffff;--s3:#ff3b30;"></span><span>高对比</span></button>
+                    <button class="style-preset-btn" type="button" data-style-preset="warm" aria-pressed="false"><span class="style-preset-icon" style="--s1:#ff7a18;--s2:#ffd166;--s3:#ef476f;"></span><span>暖色童话</span></button>
+                    <button class="style-preset-btn" type="button" data-style-preset="cool" aria-pressed="false"><span class="style-preset-icon" style="--s1:#3a86ff;--s2:#00d4ff;--s3:#8338ec;"></span><span>冷色赛博</span></button>
+                    <button class="style-preset-btn" type="button" data-style-preset="mono" aria-pressed="false"><span class="style-preset-icon" style="--s1:#111111;--s2:#888888;--s3:#f7f7f7;"></span><span>黑白漫画</span></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tool-panel" data-panel="tone">
+              <div class="tool-panel-title">调色</div>
+              <div class="tool-panel-grid tone-panel-grid">
+                <div id="toneControlGroup" class="control-group tone-control-group tone-open">
+        <label class="tone-desktop-title">调色</label>
+        <button id="toneToggleBtn" class="tone-toggle-btn secondary" type="button" aria-expanded="true">
+          <span>调色</span>
+          <span id="toneToggleState">收起 ▲</span>
+        </button>
+        <div id="toneFields" class="tone-fields tone-horizontal-fields">
+          <div class="tone-slider-deck" aria-live="polite">
+            <div class="tone-slider-card active" data-tone-row="brightness">
+              <div class="tone-slider-head"><span>亮度</span><div id="brightnessValue" class="value">0</div></div>
+              <input id="brightnessRange" type="range" min="-100" max="100" value="0" aria-label="亮度" />
+            </div>
+            <div class="tone-slider-card" data-tone-row="contrast">
+              <div class="tone-slider-head"><span>对比度</span><div id="contrastValue" class="value">0</div></div>
+              <input id="contrastRange" type="range" min="-100" max="100" value="0" aria-label="对比度" />
+            </div>
+            <div class="tone-slider-card" data-tone-row="saturation">
+              <div class="tone-slider-head"><span>饱和度</span><div id="saturationValue" class="value">0</div></div>
+              <input id="saturationRange" type="range" min="-100" max="100" value="0" aria-label="饱和度" />
+            </div>
+            <div class="tone-slider-card" data-tone-row="temperature">
+              <div class="tone-slider-head"><span>色温</span><div id="temperatureValue" class="value">0</div></div>
+              <input id="temperatureRange" type="range" min="-100" max="100" value="0" aria-label="色温" />
+            </div>
+          </div>
+
+          <div class="tone-option-strip" role="tablist" aria-label="调色项目">
+            <button id="resetToneBtn" class="tone-adjust-btn tone-action-btn" type="button" aria-label="重置调色"><span class="tone-adjust-icon">↺</span><span>重置</span></button>
+            <button class="tone-adjust-btn active" type="button" data-tone-target="brightness" role="tab" aria-selected="true"><span class="tone-adjust-icon">☼</span><span>亮度</span></button>
+            <button class="tone-adjust-btn" type="button" data-tone-target="contrast" role="tab" aria-selected="false"><span class="tone-adjust-icon">◐</span><span>对比度</span></button>
+            <button class="tone-adjust-btn" type="button" data-tone-target="saturation" role="tab" aria-selected="false"><span class="tone-adjust-icon">●</span><span>饱和度</span></button>
+            <button class="tone-adjust-btn" type="button" data-tone-target="temperature" role="tab" aria-selected="false"><span class="tone-adjust-icon">♨</span><span>色温</span></button>
+            <button id="toggleDitherBtn" class="tone-adjust-btn tone-action-btn" type="button" aria-pressed="false"><span class="tone-adjust-icon">▦</span><span>抖动</span></button>
+          </div>
+
+          <select id="ditherMode" class="tone-dither-hidden-select" aria-label="抖动 Dithering">
+            <option value="none">抖动：关闭</option>
+            <option value="ordered">抖动：开启</option>
+          </select>
+        </div>
+      </div>
+              </div>
+            </div>
+            <div class="tool-panel" data-panel="draw">
+              <div class="tool-panel-title">绘制</div>
+              <div id="editToolsControlGroup" class="control-group collapsible-control-group draw-compact-group">
+        <button id="editToolsToggleBtn" class="tone-toggle-btn secondary" type="button" aria-expanded="false">
+          <span>编辑工具</span>
+          <span id="editToolsToggleState">展开 ▼</span>
+        </button>
+        <div id="editToolsFields" class="toggle-fields draw-compact-fields">
+          <button id="previewEditModeBtn" class="secondary draw-hidden-edit-toggle" type="button" disabled>进入编辑模式</button>
+          <div id="previewEditModeHint" class="status-line draw-hidden-edit-hint">未进入编辑模式时，图纸区域用于拖动和缩放查看。</div>
+          <div class="draw-toolbar-row">
+            <button id="toolPaint" class="active draw-tool-btn" title="画笔" aria-label="画笔">
+              <span class="draw-icon-svg" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 19c1.6 0 2.8-.5 3.8-1.5l8.1-8.1-3.3-3.3-8 8C4.5 15.1 4 16.4 4 18v1h1z"></path>
+                  <path d="M14.4 5.2l1.1-1.1a2 2 0 0 1 2.8 0l1.6 1.6a2 2 0 0 1 0 2.8l-1.1 1.1"></path>
+                </svg>
+              </span>
+            </button>
+            <button id="toolErase" class="secondary draw-tool-btn" title="橡皮" aria-label="橡皮">
+              <span class="draw-icon-svg" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.2 5.3 3.8 9.7a2.2 2.2 0 0 0 0 3.1l4.2 4.2a2.2 2.2 0 0 0 3.1 0l8.9-8.9a2.2 2.2 0 0 0 0-3.1l-1-1a2.2 2.2 0 0 0-3.1 0l-7.7 7.7"></path>
+                  <path d="M13 19h7"></path>
+                </svg>
+              </span>
+            </button>
+            <div id="drawSizeSliderWrap" class="draw-size-slider-inline">
+              <input id="drawSizeSlider" type="range" min="1" max="6" value="1" aria-label="绘制大小" />
+              <div id="drawSizeValue" class="draw-size-value">1×1</div>
+            </div>
+            <button id="toolPick" class="secondary draw-tool-btn" title="取色" aria-label="取色">
+              <span class="draw-icon-svg" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 4l6 6"></path>
+                  <path d="M12.8 5.2 18.8 11.2"></path>
+                  <path d="M15.6 3.4a2.2 2.2 0 0 1 3.1 0l1.9 1.9a2.2 2.2 0 0 1 0 3.1l-3.1 3.1a2.2 2.2 0 0 1-3.1 0l-1.9-1.9a2.2 2.2 0 0 1 0-3.1z"></path>
+                  <path d="M3.5 20.5c1.7-.1 3-.5 3.9-1.4l6.7-6.7"></path>
+                  <path d="M4 16l4 4"></path>
+                </svg>
+              </span>
+            </button>
+            <button id="editColorPicker" class="draw-color-ball draw-mard-color-ball" type="button" value="#ff004d" title="Mard 色卡选色" aria-label="Mard 色卡选色"><span class="draw-ball-code">-</span></button>
+            <button id="operationToggleBtn" class="secondary operation-toggle-btn" type="button" aria-pressed="false" title="操作按键">操作按键</button>
+            <select id="editColor" hidden></select>
+            <div id="editColorPreview" class="color-preview" hidden></div>
+          </div>
+          <div id="mardColorPickerPanel" class="mard-color-picker-panel" aria-hidden="true"></div>
+          <div class="draw-meta-row">
+            <div id="selectedColorText" class="mono draw-color-code">#ff004d</div>
+            <div id="pickedIndexText" class="status-line draw-status-mini">未选择</div>
+            <div id="pickedSeedText" class="status-line draw-status-mini">未记录</div>
+          </div>
+          <div id="editorPaletteBox" class="palette draw-palette-compact"></div>
+        </div>
+      </div>
+            </div>
+            <div class="tool-panel" data-panel="same">
+              <div class="tool-panel-title">同色处理</div>
+              <div id="sameColorControlGroup" class="control-group collapsible-control-group">
+        <button id="sameColorToggleBtn" class="tone-toggle-btn secondary" type="button" aria-expanded="false">
+          <span>同色处理</span>
+          <span id="sameColorToggleState">展开 ▼</span>
+        </button>
+        <div id="sameColorFields" class="toggle-fields same-color-fields">
+          <div class="status-line same-color-status">先点图纸中的颜色，再删除或替换。</div>
+          <div class="same-color-action-row">
+            <button id="deleteColorBtn" class="danger">删除该颜色</button>
+            <div class="same-color-inline-action">
+              <button id="replaceColorBtn" class="warn">替换该颜色</button>
+              <label class="inline-color-picker-square" title="替换颜色" aria-label="替换颜色">
+                <input id="replaceColorPicker" type="color" value="#ff004d" title="替换颜色" />
+              </label>
+            </div>
+          </div>
+          <div class="same-color-option-row">
+            <label class="check-row"><input id="connectedOnly" type="checkbox" /> <span>只处理当前连通色块</span></label>
+            <div class="same-color-fill-tools">
+              <button id="fillTransparentBtn" class="secondary" type="button">填充空豆</button>
+              <label class="inline-color-picker-square" title="填充颜色" aria-label="填充颜色">
+                <input id="fillColorPicker" type="color" value="#ff004d" title="填充颜色" />
+              </label>
+            </div>
+          </div>
+          <select id="replaceColor" hidden></select>
+          <select id="fillColor" hidden></select>
+        </div>
+      </div>
+            </div>
+          </div>
+          <div class="tool-tab-strip" role="tablist" aria-label="图纸功能分类">
+            <button class="tool-tab active" type="button" data-tool="spec" role="tab" aria-selected="true"><span class="tool-tab-icon">▦</span><span>规格</span></button>
+            <button class="tool-tab" type="button" data-tool="display" role="tab" aria-selected="false"><span class="tool-tab-icon">◫</span><span>显示</span></button>
+            <button class="tool-tab" type="button" data-tool="bg" role="tab" aria-selected="false"><span class="tool-tab-icon">×</span><span>去背景</span></button>
+            <button class="tool-tab" type="button" data-tool="outline" role="tab" aria-selected="false"><span class="tool-tab-icon">⬚</span><span>描边</span></button>
+            <button class="tool-tab" type="button" data-tool="style" role="tab" aria-selected="false"><span class="tool-tab-icon filter-cluster-icon" aria-hidden="true"></span><span>风格</span></button>
+            <button class="tool-tab" type="button" data-tool="tone" role="tab" aria-selected="false"><span class="tool-tab-icon">☼</span><span>调色</span></button>
+            <button class="tool-tab" type="button" data-tool="draw" role="tab" aria-selected="false"><span class="tool-tab-icon">✎</span><span>绘制</span></button>
+            <button class="tool-tab" type="button" data-tool="same" role="tab" aria-selected="false"><span class="tool-tab-icon">●</span><span>同色</span></button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="exportPage" class="app-page export-work-page">
+      <div class="page-topbar export-topbar">
+        <button id="backToAppFromExportBtn" class="secondary back-btn">←</button>
+        <div class="page-title">导出</div>
+        <button id="backHomeFromExportBtn" class="secondary export-home-btn">首页</button>
+      </div>
+      <main class="export-page-main">
+      <section id="dataSection" class="tab-section active export-page-section">
+        <div class="export-layout">
+          <div class="canvas-card">
+            <div class="canvas-title"><span>图纸导出预览</span><span id="exportPreviewInfo">等待生成</span></div>
+            <div id="exportPreviewWrap" class="canvas-wrap export-preview-wrap">
+              <div id="exportSvgMount" class="export-svg-mount">
+                <div class="export-empty">生成图纸后，这里会显示导出效果预览。<br>预览使用 Canvas 缓存渲染，放大拖动更流畅。</div>
+              </div>
+            </div>
+            <div class="export-toolbar">
+              <button id="mirrorPatternBtn" class="secondary" disabled>镜像图案</button>
+              <button id="toggleBeadCodeBtn" class="secondary" disabled>清单用色卡编号</button>
+            </div>
+            <div class="btn-grid export-actions">
+              <button id="downloadPngBtn" class="secondary" disabled>导出 PNG 图纸</button>
+              <button id="downloadSvgBtn" class="secondary" disabled>导出 SVG 图纸</button>
+              <button id="downloadCsvBtn" class="secondary" disabled>导出材料清单</button>
+
+          <div class="canvas-card">
+            <p class="small-title">材料清单</p>
+            <div id="materialsTableWrap"></div>
+            <div class="hint">数量为图纸中实际需要的豆数，不包含备损。真实制作建议每种颜色多准备 5%～10%。</div>
+          </div>
+        </div>
+      </section>
+
+      </main>
+    </div>
+  </div>
+
+  <div id="toast" class="toast">完成</div>
+  <script src="./js/state.js"></script>
+  <script src="./js/router.js"></script>
+  <script src="./js/pages/homePage.js"></script>
+  <script src="./js/pages/myPatternsPage.js"></script>
+  <script src="./js/pages/appPage.js"></script>
+  <script src="./js/pages/exportPage.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
